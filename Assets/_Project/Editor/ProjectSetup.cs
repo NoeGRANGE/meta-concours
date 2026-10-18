@@ -3,6 +3,7 @@ using System.IO;
 using System.Threading.Tasks;
 using Deskmates.Core;
 using Deskmates.Creatures;
+using Deskmates.Sandbox;
 using Meta.XR.MRUtilityKit;
 using UnityEditor;
 using UnityEditor.Build;
@@ -14,8 +15,9 @@ using Object = UnityEngine.Object;
 namespace Deskmates.Editor
 {
     /// <summary>
-    /// Project configuration and first-time generation of the creature prefabs and the Main scene.
-    /// Generated assets are never overwritten: delete one to have it rebuilt.
+    /// Project configuration and generation of the creature prefabs, their configs and the scenes.
+    /// Scenes and configs are only created when missing; creature prefabs are created when missing and
+    /// then have their components and references brought up to date.
     /// Headless: Unity -batchmode -projectPath . -executeMethod Deskmates.Editor.ProjectSetup.RunBatch
     /// </summary>
     public static class ProjectSetup
@@ -23,18 +25,22 @@ namespace Deskmates.Editor
         const string AndroidPackageName = "com.deskmates.app";
         const string ModelsFolder = "Assets/_Project/Art/Models";
         const string CreaturePrefabsFolder = "Assets/_Project/Prefabs/Creatures";
+        const string CreatureConfigsFolder = "Assets/_Project/Settings/Creatures";
         const string MainScenePath = "Assets/_Project/Scenes/Main.unity";
+        const string SandboxScenePath = "Assets/_Project/Scenes/Sandbox_Creature.unity";
+        const string ParticleMaterialPath = "Packages/com.unity.render-pipelines.universal/Runtime/Materials/ParticlesUnlit.mat";
+        const string SighPuffName = "SighPuff";
         const string CameraRigPrefabPath = "Packages/com.meta.xr.sdk.core/Prefabs/OVRCameraRig.prefab";
         const string MrukPrefabPath = "Packages/com.meta.xr.mrutilitykit/Core/Tools/MRUK.prefab";
         const string MailCreaturePrefab = "Creature_Mail";
 
-        // Model file name -> prefab name (PRD 9).
-        static readonly (string model, string prefab)[] Creatures =
+        // Model file, prefab name (PRD 9) and colour at rest (PRD 4.2).
+        static readonly (string model, string prefab, Color32 restColor)[] Creatures =
         {
-            ("Facteur", MailCreaturePrefab),
-            ("Reunions", "Creature_Calendar"),
-            ("Taches", "Creature_Tasks"),
-            ("Messages", "Creature_Messages"),
+            ("Facteur", MailCreaturePrefab, new Color32(0xEF, 0xE6, 0xD8, 0xFF)),
+            ("Reunions", "Creature_Calendar", new Color32(0xDC, 0xE3, 0xE6, 0xFF)),
+            ("Taches", "Creature_Tasks", new Color32(0xE6, 0xDC, 0xEB, 0xFF)),
+            ("Messages", "Creature_Messages", new Color32(0xD7, 0xE3, 0xCF, 0xFF)),
         };
 
         [MenuItem("Deskmates/Setup/1. Configure Project")]
@@ -51,14 +57,17 @@ namespace Deskmates.Editor
             }
         }
 
-        [MenuItem("Deskmates/Setup/2. Create Creature Prefabs")]
+        [MenuItem("Deskmates/Setup/2. Create or Update Creature Prefabs")]
         public static void CreateCreaturePrefabs()
         {
             Directory.CreateDirectory(CreaturePrefabsFolder);
+            Directory.CreateDirectory(CreatureConfigsFolder);
             AssetDatabase.Refresh();
-            foreach ((string model, string prefab) in Creatures)
+            foreach ((string model, string prefab, Color32 restColor) in Creatures)
             {
+                CreatureConfig config = EnsureCreatureConfig(prefab, restColor);
                 CreateCreaturePrefab(model, prefab);
+                UpdateCreaturePrefab(prefab, config);
             }
 
             AssetDatabase.SaveAssets();
@@ -113,6 +122,62 @@ namespace Deskmates.Editor
             Debug.Log($"[Deskmates] Created {MainScenePath}.");
         }
 
+        [MenuItem("Deskmates/Setup/4. Create Sandbox Scene")]
+        public static void CreateSandboxScene()
+        {
+            if (File.Exists(SandboxScenePath))
+            {
+                Debug.Log($"[Deskmates] {SandboxScenePath} already exists, left untouched.");
+                return;
+            }
+
+            CreateCreaturePrefabs();
+            Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+
+            Light light = new GameObject("Directional Light").AddComponent<Light>();
+            light.type = LightType.Directional;
+            light.transform.rotation = Quaternion.Euler(50f, -30f, 0f);
+
+            // A desk top at seated height, the four creatures on it, and a camera where a seated user's eyes would be.
+            const float deskHeight = 0.75f;
+            GameObject desk = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            desk.name = "Desk";
+            desk.transform.localScale = new Vector3(1.2f, 0.03f, 0.7f);
+            desk.transform.position = new Vector3(0f, deskHeight - 0.015f, 0.15f);
+
+            Creature[] creatures = new Creature[Creatures.Length];
+            for (int i = 0; i < Creatures.Length; i++)
+            {
+                GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath(Creatures[i].prefab));
+                GameObject instance = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
+                instance.transform.SetPositionAndRotation(
+                    new Vector3((i - 1.5f) * 0.13f, deskHeight, 0f), Quaternion.Euler(0f, 180f, 0f));
+                creatures[i] = instance.GetComponent<Creature>();
+            }
+
+            Camera camera = new GameObject("Camera").AddComponent<Camera>();
+            camera.tag = "MainCamera";
+            camera.fieldOfView = 40f;
+            camera.nearClipPlane = 0.01f;
+            camera.clearFlags = CameraClearFlags.SolidColor;
+            camera.backgroundColor = new Color(0.24f, 0.24f, 0.26f);
+            camera.transform.position = new Vector3(0f, 1.05f, -0.55f);
+            camera.transform.LookAt(new Vector3(0f, deskHeight + 0.04f, 0f));
+
+            StressSandbox sandbox = new GameObject("Stress Sandbox").AddComponent<StressSandbox>();
+            SetSerialized(sandbox, "creatures", property =>
+            {
+                property.arraySize = creatures.Length;
+                for (int i = 0; i < creatures.Length; i++)
+                {
+                    property.GetArrayElementAtIndex(i).objectReferenceValue = creatures[i];
+                }
+            });
+
+            EditorSceneManager.SaveScene(scene, SandboxScenePath);
+            Debug.Log($"[Deskmates] Created {SandboxScenePath}.");
+        }
+
         /// <summary>Command-line entry point: configures the project, generates missing assets, then quits.</summary>
         public static async void RunBatch()
         {
@@ -120,7 +185,9 @@ namespace Deskmates.Editor
             try
             {
                 await ConfigureProjectAsync();
+                CreateCreaturePrefabs();
                 CreateMainScene();
+                CreateSandboxScene();
                 AssetDatabase.SaveAssets();
                 Debug.Log("[Deskmates] Batch setup finished.");
             }
@@ -173,7 +240,6 @@ namespace Deskmates.Editor
             {
                 GameObject instance = (GameObject)PrefabUtility.InstantiatePrefab(model, root.transform);
                 AlignModel(instance.transform, modelPath);
-                root.AddComponent<Creature>();
                 PrefabUtility.SaveAsPrefabAsset(root, prefabPath);
                 Debug.Log($"[Deskmates] Created {prefabPath}.");
             }
@@ -181,6 +247,106 @@ namespace Deskmates.Editor
             {
                 Object.DestroyImmediate(root);
             }
+        }
+
+        // Adds whatever components or references a creature prefab is missing. The model is the root's first child.
+        static void UpdateCreaturePrefab(string prefabName, CreatureConfig config)
+        {
+            string prefabPath = PrefabPath(prefabName);
+            GameObject root = PrefabUtility.LoadPrefabContents(prefabPath);
+            try
+            {
+                Transform model = root.transform.GetChild(0);
+                Creature creature = GetOrAddComponent<Creature>(root);
+                CreatureMotion motion = GetOrAddComponent<CreatureMotion>(root);
+                CreatureVfx vfx = GetOrAddComponent<CreatureVfx>(root);
+                GetOrAddComponent<CreatureFace>(root);
+
+                Transform puffTransform = root.transform.Find(SighPuffName);
+                ParticleSystem puff = puffTransform != null
+                    ? puffTransform.GetComponent<ParticleSystem>()
+                    : CreateSighPuff(root.transform, model);
+
+                SetSerialized(creature, "config", property => property.objectReferenceValue = config);
+                SetSerialized(motion, "visual", property => property.objectReferenceValue = model);
+                SetSerialized(vfx, "sighPuff", property => property.objectReferenceValue = puff);
+                PrefabUtility.SaveAsPrefabAsset(root, prefabPath);
+            }
+            finally
+            {
+                PrefabUtility.UnloadPrefabContents(root);
+            }
+        }
+
+        static CreatureConfig EnsureCreatureConfig(string prefabName, Color restColor)
+        {
+            string path = $"{CreatureConfigsFolder}/{prefabName.Replace("Creature_", "CreatureConfig_")}.asset";
+            CreatureConfig config = AssetDatabase.LoadAssetAtPath<CreatureConfig>(path);
+            if (config != null)
+            {
+                return config;
+            }
+
+            config = ScriptableObject.CreateInstance<CreatureConfig>();
+            config.restColor = restColor;
+            AssetDatabase.CreateAsset(config, path);
+            Debug.Log($"[Deskmates] Created {path}.");
+            return config;
+        }
+
+        // A small burst of soft white puffs leaving the mouth, forward and slightly up (PRD 4.5).
+        static ParticleSystem CreateSighPuff(Transform root, Transform model)
+        {
+            Renderer mouth = FindPart(model, "MouthSmile");
+            GameObject puffObject = new GameObject(SighPuffName);
+            puffObject.transform.SetParent(root, false);
+            puffObject.transform.localPosition = root.InverseTransformPoint(mouth.bounds.center) + new Vector3(0f, 0f, 0.01f);
+            puffObject.transform.localRotation = Quaternion.Euler(-20f, 0f, 0f);
+
+            ParticleSystem puff = puffObject.AddComponent<ParticleSystem>();
+            puff.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+
+            ParticleSystem.MainModule main = puff.main;
+            main.playOnAwake = false;
+            main.loop = false;
+            main.duration = 0.5f;
+            main.startLifetime = new ParticleSystem.MinMaxCurve(0.7f, 1f);
+            main.startSpeed = new ParticleSystem.MinMaxCurve(0.03f, 0.06f);
+            main.startSize = new ParticleSystem.MinMaxCurve(0.012f, 0.02f);
+            main.startColor = new Color(1f, 1f, 1f, 0.85f);
+            main.gravityModifier = -0.01f;
+            main.simulationSpace = ParticleSystemSimulationSpace.World;
+            main.maxParticles = 16;
+
+            ParticleSystem.EmissionModule emission = puff.emission;
+            emission.rateOverTime = 0f;
+            emission.SetBursts(new[] { new ParticleSystem.Burst(0f, 6) });
+
+            ParticleSystem.ShapeModule shape = puff.shape;
+            shape.shapeType = ParticleSystemShapeType.Cone;
+            shape.angle = 25f;
+            shape.radius = 0.004f;
+
+            ParticleSystem.SizeOverLifetimeModule size = puff.sizeOverLifetime;
+            size.enabled = true;
+            size.size = new ParticleSystem.MinMaxCurve(1f, AnimationCurve.Linear(0f, 1f, 1f, 2.5f));
+
+            Gradient fade = new Gradient();
+            fade.SetKeys(
+                new[] { new GradientColorKey(Color.white, 0f), new GradientColorKey(Color.white, 1f) },
+                new[] { new GradientAlphaKey(0.85f, 0f), new GradientAlphaKey(0f, 1f) });
+            ParticleSystem.ColorOverLifetimeModule color = puff.colorOverLifetime;
+            color.enabled = true;
+            color.color = fade;
+
+            puffObject.GetComponent<ParticleSystemRenderer>().sharedMaterial =
+                AssetDatabase.LoadAssetAtPath<Material>(ParticleMaterialPath);
+            return puff;
+        }
+
+        static T GetOrAddComponent<T>(GameObject target) where T : Component
+        {
+            return target.TryGetComponent(out T component) ? component : target.AddComponent<T>();
         }
 
         // Turns the model so its face looks along the prefab's +Z and rests its base on y = 0.

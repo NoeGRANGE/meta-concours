@@ -156,11 +156,12 @@ namespace Deskmates.Tests
             return top;
         }
 
+        // Model meshes only: the sigh puff's particle renderer has no meaningful bounds while idle.
         static Bounds VisibleBounds(Creature creature)
         {
-            Renderer[] renderers = creature.GetComponentsInChildren<Renderer>(false);
+            MeshRenderer[] renderers = creature.GetComponentsInChildren<MeshRenderer>(false);
             Bounds bounds = renderers[0].bounds;
-            foreach (Renderer renderer in renderers)
+            foreach (MeshRenderer renderer in renderers)
             {
                 bounds.Encapsulate(renderer.bounds);
             }

@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a2d02615841aa42caa873ad1a0ca2188, type: 3}
+  m_Name: CreatureConfig_Calendar
+  m_EditorClassIdentifier: Deskmates::Deskmates.Creatures.CreatureConfig
+  restColor: {r: 0.8627451, g: 0.8901961, b: 0.9019608, a: 1}
+  alertColor: {r: 0.9490196, g: 0.827451, b: 0.68235296, a: 1}
+  stressedColor: {r: 0.94509804, g: 0.6509804, b: 0.38039216, a: 1}
+  panicColor: {r: 0.8862745, g: 0.33333334, b: 0.22745098, a: 1}
+  panicEmission: 0.25
+  smoothTime: 0.5
+  expressionThresholds: {x: 0.15, y: 0.45, z: 0.8}
+  hysteresis: 0.05
+  reliefHigh: 0.6
+  reliefLow: 0.15
+  stateScales: {x: 1, y: 1.1, z: 1.25, w: 1.4}
+  breathAmplitude: 0.025
+  calmBreathPeriod: 4
+  stressedBreathPeriod: 1.2
+  hopHeight: 0.006
+  hopsPerSecond: 1.6
+  shakeAmplitude: 0.0015
+  shakeFrequency: 22
+  blinkInterval: {x: 2.5, y: 6}
+  blinkDuration: 0.12
+  reliefDuration: 1.3

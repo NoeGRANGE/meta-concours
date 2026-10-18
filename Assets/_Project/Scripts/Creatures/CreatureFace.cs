@@ -13,7 +13,7 @@ namespace Deskmates.Creatures
     }
 
     /// <summary>
-    /// Shows the face parts that belong to an expression and hides every other variant.
+    /// Shows the face parts that belong to an expression and hides every other variant, and blinks the open eyes.
     /// The models ship with all variants as named children (PRD 10.1).
     /// </summary>
     public sealed class CreatureFace : MonoBehaviour
@@ -38,6 +38,9 @@ namespace Deskmates.Creatures
 
         readonly Dictionary<string, List<GameObject>> parts = new();
         bool collected;
+        CreatureExpression blinkingFor;
+        float nextBlinkIn;
+        float blinkTimeLeft;
 
         public CreatureExpression Expression { get; private set; }
 
@@ -45,14 +48,48 @@ namespace Deskmates.Creatures
         {
             CollectParts();
             Expression = expression;
+            blinkTimeLeft = 0f;
             string[] visible = VisibleParts[expression];
             foreach (KeyValuePair<string, List<GameObject>> entry in parts)
             {
-                bool show = Array.IndexOf(visible, entry.Key) >= 0;
-                foreach (GameObject part in entry.Value)
+                SetVisible(entry.Key, Array.IndexOf(visible, entry.Key) >= 0);
+            }
+        }
+
+        /// <summary>Blinks at random intervals while the eyes are open (alert and stressed).</summary>
+        public void Tick(float deltaTime, CreatureConfig config)
+        {
+            if (Expression != CreatureExpression.Alert && Expression != CreatureExpression.Stressed)
+            {
+                return;
+            }
+
+            // Never blink right as the eyes open.
+            if (blinkingFor != Expression)
+            {
+                blinkingFor = Expression;
+                nextBlinkIn = UnityEngine.Random.Range(config.blinkInterval.x, config.blinkInterval.y);
+            }
+
+            if (blinkTimeLeft > 0f)
+            {
+                blinkTimeLeft -= deltaTime;
+                if (blinkTimeLeft <= 0f)
                 {
-                    part.SetActive(show);
+                    Apply(Expression);
                 }
+
+                return;
+            }
+
+            nextBlinkIn -= deltaTime;
+            if (nextBlinkIn <= 0f)
+            {
+                nextBlinkIn = UnityEngine.Random.Range(config.blinkInterval.x, config.blinkInterval.y);
+                blinkTimeLeft = config.blinkDuration;
+                SetVisible("EyeOpen", false);
+                SetVisible("EyeShine", false);
+                SetVisible("EyeClosed", true);
             }
         }
 
@@ -72,6 +109,19 @@ namespace Deskmates.Creatures
             }
 
             return key;
+        }
+
+        void SetVisible(string key, bool visible)
+        {
+            if (!parts.TryGetValue(key, out List<GameObject> list))
+            {
+                return;
+            }
+
+            foreach (GameObject part in list)
+            {
+                part.SetActive(visible);
+            }
         }
 
         void CollectParts()

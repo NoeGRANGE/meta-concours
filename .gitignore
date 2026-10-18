@@ -39,3 +39,8 @@ client_secret*.json
 # OS
 .DS_Store
 Thumbs.db
+
+# Input action bindings the Meta XR Core SDK writes on Play and before builds
+/RuntimeActionBindings.json
+/Assets/StreamingAssets/RuntimeActionBindings.json
+/Assets/StreamingAssets/RuntimeActionBindings.json.meta

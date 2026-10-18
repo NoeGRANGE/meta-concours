@@ -14,8 +14,15 @@ Unity : `/Applications/Unity/Hub/Editor/6000.6.5f1/Unity.app/Contents/MacOS/Unit
 
 - **Configuration et génération** des prefabs et de la scène manquants (pas de `-quit`, la méthode quitte seule) :
   `Unity -batchmode -projectPath . -executeMethod Deskmates.Editor.ProjectSetup.RunBatch -logFile <log>`
-- **Tests PlayMode**, qui chargent `Main.unity` avec les pièces Office fournies par MRUK :
+- **Tests EditMode** (logique pure, par exemple le lissage du stress) :
+  `Unity -batchmode -projectPath . -runTests -testPlatform EditMode -testResults <xml> -logFile <log>`
+- **Tests PlayMode** (prefabs des créatures, et `Main.unity` avec les pièces Office fournies par MRUK) :
   `Unity -batchmode -projectPath . -runTests -testPlatform PlayMode -testResults <xml> -logFile <log>`
+- **Si l'utilisateur a Unity ouvert sur le projet**, un batch sur le même dossier est refusé. Clone le projet dans le scratchpad (`cp -c -R` de `Assets`, `Packages`, `ProjectSettings` et `Library` : copie instantanée sur APFS), lance le batch sur le clone, puis rapatrie `Assets/_Project/` avec ses `.meta`. Vérifie d'abord, avec `rsync -n`, que rien d'autre n'a changé.
+- **Scène `Sandbox_Creature`** : les quatre créatures sur un bureau, sans casque. Sur l'objet « Stress Sandbox » :
+  - case *Same Stress For All* cochée : le curseur *Stress*, ou les touches 1 à 4 (calme à panique), règlent toutes les créatures ;
+  - case décochée : chaque créature suit son curseur dans *Individual Stress* (ordre : Mail, Calendar, Tasks, Messages) ;
+  - Espace déclenche le soupir de toutes.
 - Le test dans le XR Simulator se fait à la main : ouvrir `Main.unity`, Window > Meta > Meta XR Simulator > Activate, choisir l'environnement « Office », puis Play.
 
 Pièges déjà rencontrés :
@@ -24,12 +31,58 @@ Pièges déjà rencontrés :
 - `com.meta.xr.sdk.all` n'existe pas sur le registre Meta : on utilise les paquets `com.meta.xr.*` séparés.
 - Les modules intégrés d'Unity sont déclarés explicitement dans `Packages/manifest.json`, car le Core SDK a besoin d'`assetbundle` sans le déclarer.
 - macOS ne distingue pas les majuscules dans les noms de fichiers : rien ne doit s'appeler `assets/` à côté d'`Assets/`. Les sources 3D sont dans `SourceArt/`.
+- Unity 6.6 peut planter en se fermant après un `-executeMethod` (code 134, `libc++abi: terminate_handler`), alors que tout le travail est fait. Fie-toi à la ligne `[Deskmates] Batch setup finished.` du log plutôt qu'au code de sortie.
 
 ## Journal des features
 
 Modèle d'entrée : titre et statut, date, objectif (renvoi au PRD), ce qui a été fait, fichiers, ce qui est vérifié et ce qui ne l'est pas, décisions à valider.
 
-### 1. Socle technique (PRD §11, S1) — En revue
+Découpage de la semaine 2 (PRD §11) : 2. créature vivante, 3. mode démo, 4. calibration du bureau et lâcher avec rebond, 5. regard et pincement (bulle d'aperçu).
+
+### 2. Créature vivante (PRD §4.3 à 4.5, S2) — En revue
+
+- **Date** : 18 octobre 2026.
+- **Objectif** : la créature réagit à une valeur de stress par son visage, son mouvement, sa couleur et ses effets, puis soupire de soulagement. Le mode démo qui pilotera ce stress vient avec la feature 3.
+- **Fait** :
+  - `CreatureConfig` (ScriptableObject) : un par créature dans `Settings/Creatures/`, avec la couleur au repos de chacune (PRD §4.2), la rampe orange-rouge, les seuils, les tailles par état, les amplitudes de mouvement et la durée du soulagement.
+  - `StressSmoother` :
+    - lisse le stress, qui se stabilise en environ 1,5 s ;
+    - choisit l'expression aux seuils 0,15, 0,45 et 0,8, avec une hystérésis de ±0,025 ;
+    - déclenche le soulagement quand le stress repasse sous 0,15 après avoir dépassé 0,6.
+  - `CreatureFace` : en plus de l'expression, cligne des yeux au hasard quand ils sont ouverts (attentif, stressé).
+  - `CreatureMotion` : respiration (étirement et écrasement), taille de 1 à 1,4 selon le stress, petits sautillements en « stressé », tremblement en panique, et soulagement (la créature se dégonfle puis rebondit). Seul le modèle bouge, jamais la racine, pour ne pas gêner le placement ni la saisie.
+  - `CreatureVfx` :
+    - couleur du corps sur la rampe, avec une légère lueur en panique ;
+    - flammes du Facteur aux tailles du PRD §10, avec un scintillement ;
+    - post-it bleu puis rose des Tâches ;
+    - goutte de sueur qui glisse ;
+    - points de la bulle des Messages qui s'animent dès qu'il y a du stress ;
+    - petit nuage de particules qui sort de la bouche au soupir.
+  - `Creature` orchestre l'ensemble et expose `SetTargetStress`, `PlayRelief` et l'événement `Relieved`.
+  - `ProjectSetup` crée les configs, complète les prefabs existants (composants, références, nuage) et crée la scène `Sandbox_Creature`.
+  - `StressSandbox` : un curseur commun, ou un curseur par créature (case *Same Stress For All* décochée), ajouté à la demande de l'utilisateur pour tester chaque créature séparément.
+- **Fichiers** :
+  - `Scripts/Creatures/` : `Creature.cs`, `CreatureFace.cs`, `CreatureConfig.cs`, `CreatureMotion.cs`, `CreatureVfx.cs`, `StressRamp.cs`, `StressSmoother.cs`.
+  - `Scripts/Sandbox/StressSandbox.cs` ; `Deskmates.asmdef` référence maintenant l'Input System.
+  - `Editor/ProjectSetup.cs`.
+  - `Tests/EditMode/StressSmootherTests.cs` et `Tests/PlayMode/CreatureStressTests.cs` (nouveaux), `Tests/PlayMode/DeskPlacementTests.cs` (corrigé).
+  - Générés : les 4 prefabs, `Settings/Creatures/*.asset`, `Scenes/Sandbox_Creature.unity`. Tout chemin est relatif à `Assets/_Project/`.
+- **Vérifié** :
+  - 8 tests EditMode : le lissage est progressif ; l'expression correspond à chaque état ; pas de clignotement autour d'un seuil ; un seul soulagement après une panique, aucun sans pic de stress.
+  - 16 tests PlayMode. Sur les 4 prefabs : panique puis calme, avec le bon visage, une taille ×1,4, un corps rouge et un seul soulagement. Les flammes du Facteur et les post-it des Tâches apparaissent aux bons états. Les 10 tests de placement de la feature 1 passent toujours.
+  - Correction du test de placement de la feature 1 : sa mesure de hauteur ne prend plus que les maillages du modèle. Elle incluait le nouvel émetteur de particules, qui sans particules se place à l'origine.
+  - Le 18 octobre, l'utilisateur a jugé l'animation bonne à l'œil.
+- **Pas encore vérifié** : les performances sur casque.
+- **Décisions à valider** :
+  - Pas encore de son pour le soupir : aucun son CC0 choisi.
+  - Les flammes restent en maillages ; le passage aux particules est prévu plus tard (PRD §10).
+  - Pas encore d'ombre de contact sous les créatures.
+  - Les diffs des prefabs sont longs : c'est surtout la sérialisation par défaut du système de particules.
+- **Aussi dans ce commit** :
+  - `.gitignore` ignore les fichiers `RuntimeActionBindings.json` que le SDK Meta écrit à chaque Play.
+  - Le profil de build Meta Quest passe à l'API Android cible 34, réglage appliqué par le Project Setup Tool.
+
+### 1. Socle technique (PRD §11, S1) — Validée (`ee0df9a`)
 
 - **Date** : 13 octobre 2026.
 - **Objectif** : projet Unity, SDK Meta, import des créatures. Critère : le Facteur s'affiche sur le bureau de la pièce synthétique « office » dans le simulateur.
