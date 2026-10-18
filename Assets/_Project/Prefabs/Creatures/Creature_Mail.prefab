@@ -2333,6 +2333,7 @@ GameObject:
   - component: {fileID: 3235508140330190155}
   - component: {fileID: 4952909543955251981}
   - component: {fileID: 1302167732011346968}
+  - component: {fileID: 8440425892290092737}
   m_Layer: 0
   m_Name: Creature_Mail
   m_TagString: Untagged
@@ -2408,6 +2409,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Deskmates::Deskmates.Creatures.CreatureVfx
   sighPuff: {fileID: 8018619057594386824}
+--- !u!114 &8440425892290092737
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7266380818827047180}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c598c6b6a32944bbdbd6904ad492687a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Deskmates::Deskmates.Data.CreatureDataLink
+  sourceId: mail
+  calculator: {fileID: 11400000, guid: 4f701b985372c40b3af49fb0caf4e56d, type: 2}
 --- !u!1001 &8629702193091296438
 PrefabInstance:
   m_ObjectHideFlags: 0

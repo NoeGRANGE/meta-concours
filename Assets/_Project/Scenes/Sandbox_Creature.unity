@@ -119,6 +119,52 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &130503510
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 130503512}
+  - component: {fileID: 130503511}
+  m_Layer: 0
+  m_Name: Data
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &130503511
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 130503510}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 01ab7596721284b529dbae8fe1e829ca, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Deskmates::Deskmates.Data.DataHub
+  demoScript: {fileID: 11400000, guid: 73cc572f791774d57bb5f397efb30ce1, type: 2}
+  speed: 1
+--- !u!4 &130503512
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 130503510}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &208439071
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -333,7 +379,15 @@ MonoBehaviour:
   - {fileID: 1690431911}
   - {fileID: 1497854392}
   - {fileID: 1314878982}
+  useDemo: 0
+  demo: {fileID: 130503511}
+  sameStressForAll: 1
   stress: 0
+  individualStress:
+  - 0
+  - 0
+  - 0
+  - 0
 --- !u!4 &968243147
 Transform:
   m_ObjectHideFlags: 0
@@ -745,3 +799,4 @@ SceneRoots:
   - {fileID: 1314878981}
   - {fileID: 1528705923}
   - {fileID: 968243147}
+  - {fileID: 130503512}

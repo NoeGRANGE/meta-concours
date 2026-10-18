@@ -1,13 +1,15 @@
 using Deskmates.Creatures;
+using Deskmates.Data;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 namespace Deskmates.Sandbox
 {
     /// <summary>
-    /// Drives the creatures of the Sandbox_Creature scene by hand. With Same Stress For All on, the Stress slider
-    /// or keys 1 to 4 (calm, alert, stressed, panic) set every creature; with it off, each creature follows its own
-    /// slider in Individual Stress. Space plays the relief on all of them.
+    /// Drives the creatures of the Sandbox_Creature scene. With Use Demo on (key D), the demo script plays.
+    /// Otherwise they follow the sliders: with Same Stress For All on, the Stress slider or keys 1 to 4 (calm, alert,
+    /// stressed, panic) set every creature; with it off, each creature follows its own slider in Individual Stress.
+    /// Space plays the relief on all of them.
     /// </summary>
     public sealed class StressSandbox : MonoBehaviour
     {
@@ -15,6 +17,11 @@ namespace Deskmates.Sandbox
         static readonly float[] StateStress = { 0f, 0.3f, 0.6f, 1f };
 
         [SerializeField] Creature[] creatures;
+
+        [Tooltip("Plays the demo script instead of the sliders. Key D toggles it.")]
+        [SerializeField] bool useDemo;
+
+        [SerializeField] DataHub demo;
         [SerializeField] bool sameStressForAll = true;
         [Range(0f, 1f)] [SerializeField] float stress;
 
@@ -40,7 +47,13 @@ namespace Deskmates.Sandbox
                     {
                         stress = StateStress[i];
                         sameStressForAll = true;
+                        useDemo = false;
                     }
+                }
+
+                if (keyboard.dKey.wasPressedThisFrame)
+                {
+                    useDemo = !useDemo;
                 }
 
                 if (keyboard.spaceKey.wasPressedThisFrame)
@@ -50,6 +63,16 @@ namespace Deskmates.Sandbox
                         creature.PlayRelief();
                     }
                 }
+            }
+
+            if (demo != null)
+            {
+                demo.enabled = useDemo;
+            }
+
+            if (useDemo)
+            {
+                return;
             }
 
             for (int i = 0; i < creatures.Length; i++)

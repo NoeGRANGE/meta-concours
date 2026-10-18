@@ -22,7 +22,9 @@ Unity : `/Applications/Unity/Hub/Editor/6000.6.5f1/Unity.app/Contents/MacOS/Unit
 - **Scène `Sandbox_Creature`** : les quatre créatures sur un bureau, sans casque. Sur l'objet « Stress Sandbox » :
   - case *Same Stress For All* cochée : le curseur *Stress*, ou les touches 1 à 4 (calme à panique), règlent toutes les créatures ;
   - case décochée : chaque créature suit son curseur dans *Individual Stress* (ordre : Mail, Calendar, Tasks, Messages) ;
+  - touche D, ou case *Use Demo* : les quatre créatures suivent le scénario de démo ;
   - Espace déclenche le soupir de toutes.
+- **Mode démo** : l'objet « Data » (`DataHub`) des scènes joue `Settings/Data/DemoScript_Default.asset`. Son champ *Speed* accélère le scénario, pour la vidéo ou un test rapide.
 - Le test dans le XR Simulator se fait à la main : ouvrir `Main.unity`, Window > Meta > Meta XR Simulator > Activate, choisir l'environnement « Office », puis Play.
 
 Pièges déjà rencontrés :
@@ -31,6 +33,7 @@ Pièges déjà rencontrés :
 - `com.meta.xr.sdk.all` n'existe pas sur le registre Meta : on utilise les paquets `com.meta.xr.*` séparés.
 - Les modules intégrés d'Unity sont déclarés explicitement dans `Packages/manifest.json`, car le Core SDK a besoin d'`assetbundle` sans le déclarer.
 - macOS ne distingue pas les majuscules dans les noms de fichiers : rien ne doit s'appeler `assets/` à côté d'`Assets/`. Les sources 3D sont dans `SourceArt/`.
+- Dans un script éditeur, `EditorSceneManager.OpenScene` décharge les assets que rien ne référence encore. Une variable qui pointait sur un asset tout juste créé devient alors nulle. Recharge l'asset par son chemin après avoir ouvert la scène.
 - Unity 6.6 peut planter en se fermant après un `-executeMethod` (code 134, `libc++abi: terminate_handler`), alors que tout le travail est fait. Fie-toi à la ligne `[Deskmates] Batch setup finished.` du log plutôt qu'au code de sortie.
 
 ## Journal des features
@@ -39,7 +42,47 @@ Modèle d'entrée : titre et statut, date, objectif (renvoi au PRD), ce qui a é
 
 Découpage de la semaine 2 (PRD §11) : 2. créature vivante, 3. mode démo, 4. calibration du bureau et lâcher avec rebond, 5. regard et pincement (bulle d'aperçu).
 
-### 2.1 Visière de la casquette du Facteur — En revue
+### 3. Mode démo (PRD §7.1, §7.4 et §4.4, S2) — En revue
+
+- **Date** : 18 octobre 2026.
+- **Objectif** : les créatures réagissent à de fausses données réalistes qui évoluent sur 3 minutes, à travers la même interface que les futures vraies sources.
+- **Fait** :
+  - Interface commune `IDataSource` (PRD §7.4), avec `SourceSnapshot`, `SourceItem`, `ItemAction`, `SourceIds` et une horloge `IClock`.
+  - Formules de stress du PRD §4.4 : `MailStress`, `CalendarStress`, `TasksStress`, `MessagesStress`. Une par créature dans `Settings/Stress/`, avec des constantes réglables.
+  - `DemoScript` (ScriptableObject) décrit le scénario minuté. `DemoPlayer` le joue avec une horloge de démo plus rapide que le temps réel (0,5 minute de démo par seconde, journée qui commence à 9 h 30). `DemoDataSource` implémente `IDataSource`.
+  - Scénario par défaut (`Settings/Data/DemoScript_Default.asset`, 3 minutes ; minutage à vitesse 1) :
+    - **Mail** : cinq mails importants arrivent entre 0:08 et 1:20, panique vers 1:20, boîte vidée à 1:55.
+    - **Réunion** « Design review » (10 h 40 en heure de démo) : inquiétude dès 0:20, panique vers 2:00, la réunion commence à 2:20 et la créature soupire.
+    - **Tâches** : deux dues aujourd'hui dès le début, deux en retard à 1:30 et 1:50 (panique), cochées vers 2:30.
+    - **Messages** : deux messages directs à 0:30 et 1:10, panique vers 1:30, réponses à 2:40.
+  - *Auto Resolve* : tant que les interactions à la main n'existent pas (feature 5), le scénario joue lui-même les actions de l'utilisateur (marquer lu, marquer fait).
+  - `DataHub`, un par scène : point d'accès aux sources et à l'horloge, avec un champ *Speed*.
+  - `CreatureDataLink`, sur chaque prefab : lit la source de sa créature et en règle le stress à chaque image.
+  - Scène `Main` : le Facteur suit la démo dès le lancement. Scène `Sandbox_Creature` : la touche D lance la démo sur les quatre créatures.
+  - `ProjectSetup` crée les formules et le scénario, relie les prefabs à leur source et ajoute le DataHub aux scènes.
+- **Fichiers** :
+  - `Scripts/Data/` (nouveau dossier, avec `Demo/` et `Stress/`).
+  - `Scripts/Sandbox/StressSandbox.cs`, `Editor/ProjectSetup.cs`.
+  - Tests : `Tests/EditMode/StressCalculatorTests.cs`, `DemoPlayerTests.cs` et `DemoScenarioTests.cs` ; `Tests/PlayMode/DemoModeTests.cs`.
+  - Générés : `Settings/Stress/*.asset`, `Settings/Data/DemoScript_Default.asset`, les 4 prefabs (lien vers leur source), `Scenes/Main.unity` et `Scenes/Sandbox_Creature.unity` (objet « Data »).
+- **Vérifié** :
+  - 29 tests EditMode, dont 21 nouveaux :
+    - les formules donnent les valeurs du PRD ;
+    - le lecteur gère l'horloge, les événements, la résolution automatique, les actions de l'utilisateur et la boucle ;
+    - simulation complète du scénario avec les vraies formules et le vrai lissage : chaque créature passe par calme, attentif, stressé et panique, soupire au moins une fois et finit calme ;
+    - aucun nom de marque dans les textes.
+  - 17 tests PlayMode, dont 1 nouveau : dans `Main`, la démo seule amène le Facteur en panique puis au soupir. C'est le critère de la semaine 2, joué ici en accéléré ×40.
+  - Ce test a trouvé un bug, corrigé : le DataHub de `Main` n'avait pas de scénario, la référence se perdait à l'ouverture de la scène.
+- **Pas encore vérifié** : l'aspect à l'œil, dans le simulateur ou dans la sandbox.
+- **Décisions à valider** :
+  - Le contenu du scénario : textes en anglais, noms inventés.
+  - *Auto Resolve* activé par défaut pour l'instant.
+  - Entre 5 et 2 minutes avant une réunion, le PRD ne dit rien : le stress y monte de 0,9 à 1.
+  - Les métriques (mails importants non lus, minutes avant la réunion…) sont calculées par les formules à partir des éléments, et non stockées dans le snapshot comme le laisse entendre le PRD §7.4. Ainsi, une réunion continue d'approcher entre deux mises à jour.
+  - L'action *Snooze* sur un élément renvoie `false` : le snooze s'applique à une créature entière (PRD §5).
+  - La démo ne boucle pas ; la case *Loop* du scénario permet de la faire boucler.
+
+### 2.1 Visière de la casquette du Facteur — Validée (`1eb87c0`)
 
 - **Date** : 18 octobre 2026.
 - **Objectif** : corriger un défaut repéré par l'utilisateur : la partie plate à l'avant de la casquette semblait disparaître dans le corps.

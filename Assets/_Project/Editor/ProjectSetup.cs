@@ -3,6 +3,9 @@ using System.IO;
 using System.Threading.Tasks;
 using Deskmates.Core;
 using Deskmates.Creatures;
+using Deskmates.Data;
+using Deskmates.Data.Demo;
+using Deskmates.Data.Stress;
 using Deskmates.Sandbox;
 using Meta.XR.MRUtilityKit;
 using UnityEditor;
@@ -26,6 +29,8 @@ namespace Deskmates.Editor
         const string ModelsFolder = "Assets/_Project/Art/Models";
         const string CreaturePrefabsFolder = "Assets/_Project/Prefabs/Creatures";
         const string CreatureConfigsFolder = "Assets/_Project/Settings/Creatures";
+        const string StressCalculatorsFolder = "Assets/_Project/Settings/Stress";
+        const string DemoScriptPath = "Assets/_Project/Settings/Data/DemoScript_Default.asset";
         const string MainScenePath = "Assets/_Project/Scenes/Main.unity";
         const string SandboxScenePath = "Assets/_Project/Scenes/Sandbox_Creature.unity";
         const string ParticleMaterialPath = "Packages/com.unity.render-pipelines.universal/Runtime/Materials/ParticlesUnlit.mat";
@@ -34,13 +39,13 @@ namespace Deskmates.Editor
         const string MrukPrefabPath = "Packages/com.meta.xr.mrutilitykit/Core/Tools/MRUK.prefab";
         const string MailCreaturePrefab = "Creature_Mail";
 
-        // Model file, prefab name (PRD 9) and colour at rest (PRD 4.2).
-        static readonly (string model, string prefab, Color32 restColor)[] Creatures =
+        // Model file, prefab name (PRD 9), colour at rest (PRD 4.2), data source and stress formula (PRD 4.4).
+        static readonly (string model, string prefab, Color32 restColor, string sourceId, Type stress)[] Creatures =
         {
-            ("Facteur", MailCreaturePrefab, new Color32(0xEF, 0xE6, 0xD8, 0xFF)),
-            ("Reunions", "Creature_Calendar", new Color32(0xDC, 0xE3, 0xE6, 0xFF)),
-            ("Taches", "Creature_Tasks", new Color32(0xE6, 0xDC, 0xEB, 0xFF)),
-            ("Messages", "Creature_Messages", new Color32(0xD7, 0xE3, 0xCF, 0xFF)),
+            ("Facteur", MailCreaturePrefab, new Color32(0xEF, 0xE6, 0xD8, 0xFF), SourceIds.Mail, typeof(MailStress)),
+            ("Reunions", "Creature_Calendar", new Color32(0xDC, 0xE3, 0xE6, 0xFF), SourceIds.Calendar, typeof(CalendarStress)),
+            ("Taches", "Creature_Tasks", new Color32(0xE6, 0xDC, 0xEB, 0xFF), SourceIds.Tasks, typeof(TasksStress)),
+            ("Messages", "Creature_Messages", new Color32(0xD7, 0xE3, 0xCF, 0xFF), SourceIds.Messages, typeof(MessagesStress)),
         };
 
         [MenuItem("Deskmates/Setup/1. Configure Project")]
@@ -62,12 +67,14 @@ namespace Deskmates.Editor
         {
             Directory.CreateDirectory(CreaturePrefabsFolder);
             Directory.CreateDirectory(CreatureConfigsFolder);
+            Directory.CreateDirectory(StressCalculatorsFolder);
             AssetDatabase.Refresh();
-            foreach ((string model, string prefab, Color32 restColor) in Creatures)
+            foreach ((string model, string prefab, Color32 restColor, string sourceId, Type stress) in Creatures)
             {
                 CreatureConfig config = EnsureCreatureConfig(prefab, restColor);
+                StressCalculator calculator = EnsureStressCalculator(prefab, stress);
                 CreateCreaturePrefab(model, prefab);
-                UpdateCreaturePrefab(prefab, config);
+                UpdateCreaturePrefab(prefab, config, sourceId, calculator);
             }
 
             AssetDatabase.SaveAssets();
@@ -178,6 +185,20 @@ namespace Deskmates.Editor
             Debug.Log($"[Deskmates] Created {SandboxScenePath}.");
         }
 
+        /// <summary>Gives Main a playing DataHub, and the sandbox one its Use Demo toggle switches on.</summary>
+        [MenuItem("Deskmates/Setup/5. Add Demo Data to Scenes")]
+        public static void AddDemoDataToScenes()
+        {
+            EnsureDemoScript();
+            EditScene(MainScenePath, () => EnsureDataHub(true));
+            EditScene(SandboxScenePath, () =>
+            {
+                DataHub hub = EnsureDataHub(false);
+                StressSandbox sandbox = Object.FindAnyObjectByType<StressSandbox>();
+                SetSerialized(sandbox, "demo", property => property.objectReferenceValue = hub);
+            });
+        }
+
         /// <summary>Command-line entry point: configures the project, generates missing assets, then quits.</summary>
         public static async void RunBatch()
         {
@@ -188,6 +209,7 @@ namespace Deskmates.Editor
                 CreateCreaturePrefabs();
                 CreateMainScene();
                 CreateSandboxScene();
+                AddDemoDataToScenes();
                 AssetDatabase.SaveAssets();
                 Debug.Log("[Deskmates] Batch setup finished.");
             }
@@ -250,7 +272,8 @@ namespace Deskmates.Editor
         }
 
         // Adds whatever components or references a creature prefab is missing. The model is the root's first child.
-        static void UpdateCreaturePrefab(string prefabName, CreatureConfig config)
+        static void UpdateCreaturePrefab(string prefabName, CreatureConfig config, string sourceId,
+            StressCalculator calculator)
         {
             string prefabPath = PrefabPath(prefabName);
             GameObject root = PrefabUtility.LoadPrefabContents(prefabPath);
@@ -260,6 +283,7 @@ namespace Deskmates.Editor
                 Creature creature = GetOrAddComponent<Creature>(root);
                 CreatureMotion motion = GetOrAddComponent<CreatureMotion>(root);
                 CreatureVfx vfx = GetOrAddComponent<CreatureVfx>(root);
+                CreatureDataLink link = GetOrAddComponent<CreatureDataLink>(root);
                 GetOrAddComponent<CreatureFace>(root);
 
                 Transform puffTransform = root.transform.Find(SighPuffName);
@@ -270,6 +294,8 @@ namespace Deskmates.Editor
                 SetSerialized(creature, "config", property => property.objectReferenceValue = config);
                 SetSerialized(motion, "visual", property => property.objectReferenceValue = model);
                 SetSerialized(vfx, "sighPuff", property => property.objectReferenceValue = puff);
+                SetSerialized(link, "sourceId", property => property.stringValue = sourceId);
+                SetSerialized(link, "calculator", property => property.objectReferenceValue = calculator);
                 PrefabUtility.SaveAsPrefabAsset(root, prefabPath);
             }
             finally
@@ -292,6 +318,118 @@ namespace Deskmates.Editor
             AssetDatabase.CreateAsset(config, path);
             Debug.Log($"[Deskmates] Created {path}.");
             return config;
+        }
+
+        static StressCalculator EnsureStressCalculator(string prefabName, Type type)
+        {
+            string path = $"{StressCalculatorsFolder}/{prefabName.Replace("Creature_", "Stress_")}.asset";
+            StressCalculator calculator = AssetDatabase.LoadAssetAtPath<StressCalculator>(path);
+            if (calculator != null)
+            {
+                return calculator;
+            }
+
+            calculator = (StressCalculator)ScriptableObject.CreateInstance(type);
+            AssetDatabase.CreateAsset(calculator, path);
+            Debug.Log($"[Deskmates] Created {path}.");
+            return calculator;
+        }
+
+        // The default scenario (PRD 7.1): about three minutes in which each creature goes from calm to panic and
+        // back, at different moments. Names are invented; nothing refers to a real brand or person.
+        static DemoScript EnsureDemoScript()
+        {
+            DemoScript script = AssetDatabase.LoadAssetAtPath<DemoScript>(DemoScriptPath);
+            if (script != null)
+            {
+                return script;
+            }
+
+            script = ScriptableObject.CreateInstance<DemoScript>();
+            script.events.AddRange(new[]
+            {
+                // Mail: important mails pile up, then the user goes through the inbox.
+                DemoAdd(0f, SourceIds.Mail, "mail-lunch", "Lunch menu for the week", "Office team", -30f),
+                DemoAdd(8f, SourceIds.Mail, "mail-contract", "Contract draft for your review", "Maya Lindqvist", -2f, true),
+                DemoAdd(25f, SourceIds.Mail, "mail-client-call", "Client call moved to 3 pm", "Tomás Rivera", -1f, true),
+                DemoAdd(45f, SourceIds.Mail, "mail-budget", "Budget figures needed today", "Priya Nair", -1f, true),
+                DemoAdd(62f, SourceIds.Mail, "mail-contract-followup", "Re: Contract draft, any update?", "Maya Lindqvist", 0f, true),
+                DemoAdd(80f, SourceIds.Mail, "mail-invoice", "Invoice 2291 is overdue", "Accounts team", 0f, true),
+                DemoResolve(115f, SourceIds.Mail),
+
+                // Calendar: the design review comes closer, then starts. The next meeting is far away.
+                DemoAdd(0f, SourceIds.Calendar, "meeting-design-review", "Design review", "with Jonah Park", 70f),
+                DemoAdd(0f, SourceIds.Calendar, "meeting-weekly-planning", "Weekly planning", "with the product team", 190f),
+
+                // Tasks: two due today, one tomorrow; two go overdue, then the user ticks them off.
+                DemoAdd(0f, SourceIds.Tasks, "task-slides", "Send the slide deck to Priya", "Work", 45f),
+                DemoAdd(0f, SourceIds.Tasks, "task-onboarding", "Review the onboarding copy", "Work", 100f),
+                DemoAdd(0f, SourceIds.Tasks, "task-offsite", "Book the team offsite venue", "Work", 24f * 60f),
+                DemoAdd(50f, SourceIds.Tasks, "task-report", "Update the quarterly report", "Work", 30f),
+                DemoResolve(150f, SourceIds.Tasks, "task-slides"),
+                DemoResolve(152f, SourceIds.Tasks, "task-report"),
+                DemoResolve(154f, SourceIds.Tasks, "task-onboarding"),
+
+                // Messages: two direct messages wait longer and longer, then the user answers.
+                DemoAdd(30f, SourceIds.Messages, "dm-sam", "Got a minute to talk about the demo?", "Sam Okafor", 0f),
+                DemoAdd(70f, SourceIds.Messages, "dm-lena", "Can you check my numbers before 11?", "Lena Ruiz", 0f),
+                DemoResolve(160f, SourceIds.Messages),
+            });
+
+            Directory.CreateDirectory(Path.GetDirectoryName(DemoScriptPath));
+            AssetDatabase.Refresh();
+            AssetDatabase.CreateAsset(script, DemoScriptPath);
+            AssetDatabase.SaveAssets();
+            Debug.Log($"[Deskmates] Created {DemoScriptPath}.");
+            return script;
+        }
+
+        static DemoEvent DemoAdd(float at, string sourceId, string itemId, string title, string detail, float minutesFromNow,
+            bool important = false)
+        {
+            return new DemoEvent
+            {
+                atSecond = at,
+                sourceId = sourceId,
+                kind = DemoEventKind.AddItem,
+                itemId = itemId,
+                title = title,
+                detail = detail,
+                minutesFromNow = minutesFromNow,
+                important = important,
+            };
+        }
+
+        static DemoEvent DemoResolve(float at, string sourceId, string itemId = "")
+        {
+            return new DemoEvent { atSecond = at, sourceId = sourceId, kind = DemoEventKind.Resolve, itemId = itemId };
+        }
+
+        static DataHub EnsureDataHub(bool enabled)
+        {
+            // Loaded here rather than passed in: opening a scene unloads assets that nothing references yet.
+            DemoScript script = AssetDatabase.LoadAssetAtPath<DemoScript>(DemoScriptPath);
+            DataHub hub = Object.FindAnyObjectByType<DataHub>(FindObjectsInactive.Include);
+            if (hub == null)
+            {
+                hub = new GameObject("Data").AddComponent<DataHub>();
+                hub.enabled = enabled;
+            }
+
+            SetSerialized(hub, "demoScript", property => property.objectReferenceValue = script);
+            return hub;
+        }
+
+        static void EditScene(string path, Action edit)
+        {
+            if (!File.Exists(path))
+            {
+                return;
+            }
+
+            Scene scene = EditorSceneManager.OpenScene(path, OpenSceneMode.Single);
+            edit();
+            EditorSceneManager.SaveScene(scene);
         }
 
         // A small burst of soft white puffs leaving the mouth, forward and slightly up (PRD 4.5).

@@ -1,0 +1,172 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f5b91268fa2d7486dbbbb2b3495c181a, type: 3}
+  m_Name: DemoScript_Default
+  m_EditorClassIdentifier: Deskmates::Deskmates.Data.Demo.DemoScript
+  demoMinutesPerSecond: 0.5
+  startHour: 9.5
+  autoResolve: 1
+  loop: 0
+  tailSeconds: 20
+  events:
+  - atSecond: 0
+    sourceId: mail
+    kind: 0
+    itemId: mail-lunch
+    title: Lunch menu for the week
+    detail: Office team
+    important: 0
+    minutesFromNow: -30
+  - atSecond: 8
+    sourceId: mail
+    kind: 0
+    itemId: mail-contract
+    title: Contract draft for your review
+    detail: Maya Lindqvist
+    important: 1
+    minutesFromNow: -2
+  - atSecond: 25
+    sourceId: mail
+    kind: 0
+    itemId: mail-client-call
+    title: Client call moved to 3 pm
+    detail: "Tom\xE1s Rivera"
+    important: 1
+    minutesFromNow: -1
+  - atSecond: 45
+    sourceId: mail
+    kind: 0
+    itemId: mail-budget
+    title: Budget figures needed today
+    detail: Priya Nair
+    important: 1
+    minutesFromNow: -1
+  - atSecond: 62
+    sourceId: mail
+    kind: 0
+    itemId: mail-contract-followup
+    title: 'Re: Contract draft, any update?'
+    detail: Maya Lindqvist
+    important: 1
+    minutesFromNow: 0
+  - atSecond: 80
+    sourceId: mail
+    kind: 0
+    itemId: mail-invoice
+    title: Invoice 2291 is overdue
+    detail: Accounts team
+    important: 1
+    minutesFromNow: 0
+  - atSecond: 115
+    sourceId: mail
+    kind: 1
+    itemId: 
+    title: 
+    detail: 
+    important: 0
+    minutesFromNow: 0
+  - atSecond: 0
+    sourceId: calendar
+    kind: 0
+    itemId: meeting-design-review
+    title: Design review
+    detail: with Jonah Park
+    important: 0
+    minutesFromNow: 70
+  - atSecond: 0
+    sourceId: calendar
+    kind: 0
+    itemId: meeting-weekly-planning
+    title: Weekly planning
+    detail: with the product team
+    important: 0
+    minutesFromNow: 190
+  - atSecond: 0
+    sourceId: tasks
+    kind: 0
+    itemId: task-slides
+    title: Send the slide deck to Priya
+    detail: Work
+    important: 0
+    minutesFromNow: 45
+  - atSecond: 0
+    sourceId: tasks
+    kind: 0
+    itemId: task-onboarding
+    title: Review the onboarding copy
+    detail: Work
+    important: 0
+    minutesFromNow: 100
+  - atSecond: 0
+    sourceId: tasks
+    kind: 0
+    itemId: task-offsite
+    title: Book the team offsite venue
+    detail: Work
+    important: 0
+    minutesFromNow: 1440
+  - atSecond: 50
+    sourceId: tasks
+    kind: 0
+    itemId: task-report
+    title: Update the quarterly report
+    detail: Work
+    important: 0
+    minutesFromNow: 30
+  - atSecond: 150
+    sourceId: tasks
+    kind: 1
+    itemId: task-slides
+    title: 
+    detail: 
+    important: 0
+    minutesFromNow: 0
+  - atSecond: 152
+    sourceId: tasks
+    kind: 1
+    itemId: task-report
+    title: 
+    detail: 
+    important: 0
+    minutesFromNow: 0
+  - atSecond: 154
+    sourceId: tasks
+    kind: 1
+    itemId: task-onboarding
+    title: 
+    detail: 
+    important: 0
+    minutesFromNow: 0
+  - atSecond: 30
+    sourceId: messages
+    kind: 0
+    itemId: dm-sam
+    title: Got a minute to talk about the demo?
+    detail: Sam Okafor
+    important: 0
+    minutesFromNow: 0
+  - atSecond: 70
+    sourceId: messages
+    kind: 0
+    itemId: dm-lena
+    title: Can you check my numbers before 11?
+    detail: Lena Ruiz
+    important: 0
+    minutesFromNow: 0
+  - atSecond: 160
+    sourceId: messages
+    kind: 1
+    itemId: 
+    title: 
+    detail: 
+    important: 0
+    minutesFromNow: 0
