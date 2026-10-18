@@ -39,7 +39,28 @@ Modèle d'entrée : titre et statut, date, objectif (renvoi au PRD), ce qui a é
 
 Découpage de la semaine 2 (PRD §11) : 2. créature vivante, 3. mode démo, 4. calibration du bureau et lâcher avec rebond, 5. regard et pincement (bulle d'aperçu).
 
-### 2. Créature vivante (PRD §4.3 à 4.5, S2) — En revue
+### 2.1 Visière de la casquette du Facteur — En revue
+
+- **Date** : 18 octobre 2026.
+- **Objectif** : corriger un défaut repéré par l'utilisateur : la partie plate à l'avant de la casquette semblait disparaître dans le corps.
+- **Cause** : dans `build_creatures.py`, la visière était un demi-cylindre obtenu en supprimant des sommets. Cette suppression effaçait aussi les faces du dessus et du dessous. La visière n'était donc qu'un ruban, et on voyait le corps à travers.
+- **Fait** :
+  - Le script coupe maintenant le cylindre par un plan, referme la coupe et rend la visière en faces plates. Elle devient un demi-disque plein (138 sommets au lieu de 42).
+  - Modèles reconstruits avec Blender 5.1.1, sans interface.
+  - Seul `Facteur.glb` a été recopié ; les trois autres créatures ne changent pas.
+- **Fichiers** :
+  - `SourceArt/creatures_bureau/` : `build_creatures.py`, `Facteur.glb`, `creatures_bureau.blend`, et les deux rendus `rendu_*.png`.
+  - `Assets/_Project/Art/Models/Facteur.glb`.
+- **Vérifié** :
+  - Comparaison nœud par nœud de l'ancien et du nouveau `Facteur.glb` : seule `Facteur_CapVisor` change.
+  - Gros plan rendu dans Blender avant et après : la visière est pleine et le corps ne se voit plus au travers.
+  - Les 16 tests PlayMode passent avec le nouveau modèle, et le prefab `Creature_Mail` n'a pas eu besoin de changer.
+- **Pas encore vérifié** : l'aspect dans Unity, à l'œil.
+- **Décisions à valider** :
+  - Les trois autres `.glb` de `SourceArt` restent ceux de l'export d'origine (Blender 5.2), alors que le `.blend` et les rendus viennent du nouvel export (Blender 5.1.1).
+  - `SourceArt/creatures_bureau.zip` contient toujours l'ancienne version. Laissé tel quel, faute de décision.
+
+### 2. Créature vivante (PRD §4.3 à 4.5, S2) — Validée (`38b1192`)
 
 - **Date** : 18 octobre 2026.
 - **Objectif** : la créature réagit à une valeur de stress par son visage, son mouvement, sa couleur et ses effets, puis soupire de soulagement. Le mode démo qui pilotera ce stress vient avec la feature 3.

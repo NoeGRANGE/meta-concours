@@ -240,10 +240,15 @@ def build_creature(name, kind, body_color, col):
         bmesh.ops.delete(bm, geom=[v for v in bm.verts if v.co.z < -0.01], context='VERTS')
         crown = add("CapCrown", mesh_obj(f"{name}_CapCrown", bm, col, M["cap"]))
         crown.scale = (0.31, 0.29, 0.17); crown.location = (0, 0.01, H - 0.09)
+        # visière : demi-disque plein. On coupe le cylindre par un plan (au lieu de supprimer
+        # des sommets, ce qui effaçait les faces du dessus et du dessous), puis on referme la coupe.
         bm = bmesh.new()
         bmesh.ops.create_cone(bm, cap_ends=True, segments=40, radius1=1, radius2=1, depth=1)
-        bmesh.ops.delete(bm, geom=[v for v in bm.verts if v.co.y > 0.05], context='VERTS')
-        visor = add("CapVisor", mesh_obj(f"{name}_CapVisor", bm, col, M["visor"]))
+        bmesh.ops.bisect_plane(bm, geom=bm.verts[:] + bm.edges[:] + bm.faces[:],
+                               plane_co=(0, 0.05, 0), plane_no=(0, 1, 0), clear_outer=True)
+        bmesh.ops.holes_fill(bm, edges=[e for e in bm.edges if e.is_boundary], sides=0)
+        bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+        visor = add("CapVisor", mesh_obj(f"{name}_CapVisor", bm, col, M["visor"], smooth=False))
         visor.scale = (0.25, 0.16, 0.02); visor.location = (0, -0.2, H - 0.095)
         visor.rotation_euler = (math.radians(12), 0, 0)
         band = add("CapBand", mesh_obj(f"{name}_CapBand", sphere_bm(1, 40, 6), col, M["visor"]))
