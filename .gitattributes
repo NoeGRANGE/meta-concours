@@ -1,0 +1,22 @@
+# Unity text assets: keep LF, let Unity's YAML stay diffable
+*.cs text eol=lf diff=csharp
+*.meta text eol=lf
+*.unity text eol=lf
+*.prefab text eol=lf
+*.asset text eol=lf
+*.mat text eol=lf
+*.anim text eol=lf
+*.controller text eol=lf
+*.inputactions text eol=lf
+*.asmdef text eol=lf
+*.json text eol=lf
+
+# Binary art and audio
+*.glb binary
+*.blend binary
+*.png binary
+*.jpg binary
+*.wav binary
+*.ogg binary
+*.mp3 binary
+*.zip binary
