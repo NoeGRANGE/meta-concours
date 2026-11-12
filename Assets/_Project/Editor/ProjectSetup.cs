@@ -6,8 +6,14 @@ using Deskmates.Creatures;
 using Deskmates.Data;
 using Deskmates.Data.Demo;
 using Deskmates.Data.Stress;
+using Deskmates.Desk;
+using Deskmates.Interaction;
 using Deskmates.Sandbox;
 using Meta.XR.MRUtilityKit;
+using Oculus.Interaction;
+using Oculus.Interaction.Editor.QuickActions;
+using Oculus.Interaction.Input;
+using Oculus.Interaction.OVR.Editor.QuickActions;
 using UnityEditor;
 using UnityEditor.Build;
 using UnityEditor.SceneManagement;
@@ -31,10 +37,18 @@ namespace Deskmates.Editor
         const string CreatureConfigsFolder = "Assets/_Project/Settings/Creatures";
         const string StressCalculatorsFolder = "Assets/_Project/Settings/Stress";
         const string DemoScriptPath = "Assets/_Project/Settings/Data/DemoScript_Default.asset";
+        const string DeskCalibrationConfigPath = "Assets/_Project/Settings/Desk/DeskCalibrationConfig.asset";
         const string MainScenePath = "Assets/_Project/Scenes/Main.unity";
         const string SandboxScenePath = "Assets/_Project/Scenes/Sandbox_Creature.unity";
         const string ParticleMaterialPath = "Packages/com.unity.render-pipelines.universal/Runtime/Materials/ParticlesUnlit.mat";
         const string SighPuffName = "SighPuff";
+
+        // Parts of Meta's interaction rig that move the user around: a seated app has no use for them (PRD 2.2).
+        static readonly string[] LocomotionParts =
+        {
+            "Locomotor", "LocomotionHandInteractorGroup", "LocomotionControllerInteractorGroup",
+            "MicroGesturesLocomotionHandInteractorGroup",
+        };
         const string CameraRigPrefabPath = "Packages/com.meta.xr.sdk.core/Prefabs/OVRCameraRig.prefab";
         const string MrukPrefabPath = "Packages/com.meta.xr.mrutilitykit/Core/Tools/MRUK.prefab";
         const string MailCreaturePrefab = "Creature_Mail";
@@ -199,6 +213,48 @@ namespace Deskmates.Editor
             });
         }
 
+        /// <summary>
+        /// Gives Main the Interaction SDK hands and the desk session (calibration, memory, editor shortcuts),
+        /// and wires them to the app. Safe to run again: it only adds what is missing.
+        /// </summary>
+        [MenuItem("Deskmates/Setup/6. Add Hands and Desk to Main")]
+        public static void AddHandsAndDeskToMain()
+        {
+            EnsureDeskCalibrationConfig();
+            EditScene(MainScenePath, () =>
+            {
+                if (Object.FindAnyObjectByType<OVRCameraRigRef>() == null)
+                {
+                    OVRQuickActionsAPI.AddOVRInteractionRig(false);
+                }
+
+                foreach (Transform part in Object.FindAnyObjectByType<OVRCameraRigRef>().GetComponentsInChildren<Transform>(true))
+                {
+                    if (Array.IndexOf(LocomotionParts, part.name) >= 0)
+                    {
+                        part.gameObject.SetActive(false);
+                    }
+                }
+
+                Transform head = Object.FindAnyObjectByType<OVRCameraRig>().transform.Find("TrackingSpace/CenterEyeAnchor");
+                DeskSession session = Object.FindAnyObjectByType<DeskSession>(FindObjectsInactive.Include);
+                if (session == null)
+                {
+                    session = CreateDeskSession();
+                }
+
+                DeskCalibration calibration = session.GetComponent<DeskCalibration>();
+                DeskRipple ripple = session.GetComponentInChildren<DeskRipple>(true);
+                DeskCalibrationConfig config = AssetDatabase.LoadAssetAtPath<DeskCalibrationConfig>(DeskCalibrationConfigPath);
+                SetSerialized(calibration, "config", property => property.objectReferenceValue = config);
+                SetSerialized(calibration, "head", property => property.objectReferenceValue = head);
+                SetSerialized(calibration, "ripple", property => property.objectReferenceValue = ripple);
+                SetSerialized(session, "calibration", property => property.objectReferenceValue = calibration);
+                SetSerialized(session.GetComponent<DeskDebugKeys>(), "session", property => property.objectReferenceValue = session);
+                SetSerialized(Object.FindAnyObjectByType<AppBootstrap>(), "desk", property => property.objectReferenceValue = session);
+            });
+        }
+
         /// <summary>Command-line entry point: configures the project, generates missing assets, then quits.</summary>
         public static async void RunBatch()
         {
@@ -210,6 +266,7 @@ namespace Deskmates.Editor
                 CreateMainScene();
                 CreateSandboxScene();
                 AddDemoDataToScenes();
+                AddHandsAndDeskToMain();
                 AssetDatabase.SaveAssets();
                 Debug.Log("[Deskmates] Batch setup finished.");
             }
@@ -285,6 +342,7 @@ namespace Deskmates.Editor
                 CreatureVfx vfx = GetOrAddComponent<CreatureVfx>(root);
                 CreatureDataLink link = GetOrAddComponent<CreatureDataLink>(root);
                 GetOrAddComponent<CreatureFace>(root);
+                EnsureGrab(root, sourceId);
 
                 Transform puffTransform = root.transform.Find(SighPuffName);
                 ParticleSystem puff = puffTransform != null
@@ -318,6 +376,63 @@ namespace Deskmates.Editor
             AssetDatabase.CreateAsset(config, path);
             Debug.Log($"[Deskmates] Created {path}.");
             return config;
+        }
+
+        // Hand grab and distance grab from the Interaction SDK (PRD 5), then our own fall onto the desk (PRD 5.1).
+        static void EnsureGrab(GameObject root, string creatureId)
+        {
+            if (!root.TryGetComponent(out BoxCollider collider))
+            {
+                Bounds body = FindPart(root.transform.GetChild(0), "Body").bounds;
+                collider = root.AddComponent<BoxCollider>();
+                collider.center = root.transform.InverseTransformPoint(body.center);
+                collider.size = body.size;
+            }
+
+            if (!root.TryGetComponent(out Grabbable grabbable))
+            {
+                QuickActionsAPI.AddGrabInteraction(root);
+                QuickActionsAPI.AddDistanceGrabInteraction(root, DistanceGrabMode.PullToHand);
+                grabbable = root.GetComponent<Grabbable>();
+            }
+
+            // Released creatures fall back onto the desk by themselves, not by physics.
+            SetSerialized(grabbable, "_throwWhenUnselected", property => property.boolValue = false);
+            GrabAndDrop drop = GetOrAddComponent<GrabAndDrop>(root);
+            SetSerialized(drop, "grabbable", property => property.objectReferenceValue = grabbable);
+            SetSerialized(drop, "creatureId", property => property.stringValue = creatureId);
+        }
+
+        static DeskSession CreateDeskSession()
+        {
+            GameObject sessionObject = new GameObject("Desk Session");
+            sessionObject.AddComponent<DeskCalibration>();
+            sessionObject.AddComponent<DeskDebugKeys>();
+            DeskSession session = sessionObject.AddComponent<DeskSession>();
+
+            GameObject rippleObject = new GameObject("Desk Ripple");
+            rippleObject.transform.SetParent(sessionObject.transform, false);
+            LineRenderer line = rippleObject.AddComponent<LineRenderer>();
+            line.sharedMaterial = AssetDatabase.LoadAssetAtPath<Material>(ParticleMaterialPath);
+            line.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            line.receiveShadows = false;
+            line.enabled = false;
+            rippleObject.AddComponent<DeskRipple>();
+            return session;
+        }
+
+        static void EnsureDeskCalibrationConfig()
+        {
+            if (AssetDatabase.LoadAssetAtPath<DeskCalibrationConfig>(DeskCalibrationConfigPath) != null)
+            {
+                return;
+            }
+
+            Directory.CreateDirectory(Path.GetDirectoryName(DeskCalibrationConfigPath));
+            AssetDatabase.Refresh();
+            AssetDatabase.CreateAsset(ScriptableObject.CreateInstance<DeskCalibrationConfig>(), DeskCalibrationConfigPath);
+            AssetDatabase.SaveAssets();
+            Debug.Log($"[Deskmates] Created {DeskCalibrationConfigPath}.");
         }
 
         static StressCalculator EnsureStressCalculator(string prefabName, Type type)

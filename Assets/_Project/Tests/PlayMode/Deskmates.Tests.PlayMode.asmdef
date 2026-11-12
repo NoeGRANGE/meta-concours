@@ -5,6 +5,7 @@
         "Deskmates",
         "Oculus.VR",
         "meta.xr.mrutilitykit",
+        "Oculus.Interaction",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],

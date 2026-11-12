@@ -2,7 +2,7 @@
 
 > Document de référence du projet, à la racine du repo. Il décrit **quoi** construire, **pourquoi**, et **dans quelles limites**.
 > Agent : lis ce fichier en entier avant toute tâche. En cas de doute entre deux options, choisis celle qui sert le mieux la section « Critères de jugement ».
-> Dernière mise à jour : 18 octobre 2026.
+> Dernière mise à jour : 12 novembre 2026.
 
 ---
 
@@ -98,6 +98,7 @@ Travailleurs du savoir débordés (freelances, développeurs, managers) qui port
 | **Réunions** (Calendar) | Page de calendrier sur la tête | `#DCE3E6` bleu pâle | Google Calendar | Minutes avant la prochaine réunion |
 | **Messages** | Bulle de dialogue « … » au-dessus de la tête | `#D7E3CF` vert sauge | **Mode démo uniquement** pour le concours (Slack plus tard) | Messages directs ou mentions en attente, et depuis combien de temps |
 | **Tâches** (Tasks) | Post-it jaune sur la tête, d'autres s'empilent | `#E6DCEB` lilas | Google Tasks | Tâches en retard ou dues aujourd'hui |
+| **Agents** (pour développeurs) | Casque de chantier jaune avec lampe frontale, rangée de billes d'état au-dessus (§4.6) | `#D9E4EC` gris-bleu ardoise | **Mode démo uniquement** pour le concours (plus tard : sessions d'agents de code sur l'ordinateur) | Sessions qui attendent une réponse ou une autorisation, sessions terminées non consultées, sessions en erreur |
 
 ### 4.3 Le modèle de stress
 Chaque créature a **une seule valeur `stress` dans [0, 1]**. Tout le rendu en découle. Les transitions sont **toujours progressives** (lissage d'environ 1 à 2 s), jamais de saut brusque.
@@ -120,6 +121,7 @@ Facteur   : s = clamp01( 0.18 * importantUnread + 0.10 * hoursOldestImportant )
 Réunions  : s = 0 si > 60 min ; rampe linéaire de 60 min → 5 min (0 → 0.9) ; 1.0 à ≤ 2 min ; retour à 0 quand la réunion commence
 Tâches    : s = clamp01( 0.35 * overdue + 0.15 * dueToday )
 Messages  : s = clamp01( 0.2 * pendingDMs + 0.15 * minutesOldest / 10 )
+Agents    : s = clamp01( 0.4 * waitingForUser + 0.3 * failed + 0.15 * finishedUnseen + 0.1 * minutesOldestWaiting / 5 )
 ```
 « Important » pour les mails : libellé Important, ou expéditeur dans une liste de contacts prioritaires. Les constantes sont dans un ScriptableObject par créature, réglable dans l'inspecteur.
 
@@ -127,6 +129,18 @@ Messages  : s = clamp01( 0.2 * pendingDMs + 0.15 * minutesOldest / 10 )
 Quand le stress repasse sous 0,15 après avoir été au-dessus de 0,6 : la créature se dégonfle, **soupire** (son + petit nuage), puis revient au calme avec un rebond satisfaisant. C'est la récompense ; elle est importante pour la vidéo et pour « Reason to Come Back ».
 
 ---
+
+### 4.6 Créature Agents : design
+**Piste retenue le 12 novembre : A, le contremaître.** Les autres pistes restent notées pour mémoire.
+Même famille que les autres : galet en vinyle mat, ~7 cm, visage minimal, un accessoire qui dit sa fonction. Couleur au repos proposée : `#D9E4EC` gris-bleu ardoise clair.
+
+| Piste | Accessoire | Comment il montre l'état des sessions | Points forts / faibles |
+|---|---|---|---|
+| **A. Le contremaître** (retenue) | Petit casque de chantier jaune, avec une lampe frontale | La lampe s'allume quand une session attend ta réponse ; au-dessus de la tête, une rangée de petites billes, une par session : grise en cours, bleue terminée, orange qui attend, rouge en erreur | Lisible de loin, compte les sessions d'un coup d'œil ; les billes demandent un peu de modélisation |
+| B. L'opérateur radio | Casque audio avec micro et antenne | L'antenne clignote et des ondes sortent quand une session attend | Très « je t'appelle », mais plus proche du Messages |
+| C. Le chef d'orchestre | Petite baguette et nœud papillon | Bat la mesure tant que les sessions tournent, s'arrête et regarde l'utilisateur quand l'une attend | Charmant, mais le message « attend ta réponse » est moins évident |
+
+Moment signature : quand une session se termine, la lampe (piste A) clignote deux fois et la créature fait un petit saut de joie.
 
 ## 5. Interactions (hands-first + gaze)
 
@@ -151,16 +165,35 @@ Contraintes :
 On ne compte pas sur le scan de la pièce pour connaître la hauteur du bureau. Ce scan n'existe que si l'utilisateur a fait la configuration de l'espace et que son bureau y est étiqueté `TABLE`. Rien ne garantit non plus qu'il existe sur les Meta VR Glasses (§8.1). La référence vient donc de la main de l'utilisateur.
 
 - **Geste** : poser une main, ou les deux, à plat sur le bureau pendant environ 1 s. Une main fantôme animée montre le geste, sans texte.
-- **Détection** : paume vers le bas, doigts tendus, main immobile (moins de 2 cm/s pendant 0,6 s), au moins 25 cm sous les yeux, suivi des mains en confiance haute. Le geste n'est écouté que pendant une calibration, jamais en permanence : poser les mains sur le bureau en tapant ne doit rien déclencher.
+- **Détection** : main à plat (bouts des doigts, jointures et poignet à la même hauteur à 2,5 cm près, ce qui suppose les doigts tendus et la main horizontale), immobile (moins de 2 cm/s pendant 0,6 s), au moins 25 cm sous les yeux, suivi des mains en confiance haute. Le geste n'est écouté que pendant une calibration, jamais en permanence : poser les mains sur le bureau en tapant ne doit rien déclencher.
 - **Mesure** : la hauteur est celle des articulations les plus basses de la main (bouts des doigts, jointures), moins l'épaisseur de la main (environ 8 mm, réglable dans un ScriptableObject). Avec deux mains, on prend la moyenne.
 - **Ce qu'on retient** :
   - un **plan horizontal**, aligné sur la gravité (on ignore l'inclinaison de la main), et sa hauteur ;
-  - une **zone de bureau** : un disque d'environ 60 cm de rayon autour du point posé, ou le rectangle couvrant les deux mains avec une marge. On ne connaît pas les vrais bords du bureau.
-  - Si une table du scan MRUK est à ±3 cm de la hauteur mesurée, on s'aligne sur elle et on reprend ses bords.
+  - une **zone de bureau** rectangulaire, orientée face à l'utilisateur : 1,2 m de large sur 0,7 m de profondeur, centrée sur la main posée, ou le rectangle couvrant les deux mains avec 15 cm de marge, s'il est plus grand. On ne connaît pas les vrais bords du bureau.
+  - Si une table du scan MRUK est à ±3 cm de la hauteur mesurée, on s'aligne sur sa hauteur. Reprendre aussi ses bords viendra plus tard.
 - **Retour visuel** : une onde lumineuse parcourt le plan mesuré, avec un son. L'utilisateur voit tout de suite si le plan colle à son vrai bureau, et peut recommencer.
-- **Persistance** : le plan est rattaché à une ancre spatiale et rechargé aux sessions suivantes. On peut recalibrer depuis le menu.
+- **Persistance et changement de bureau** : voir §5.2.
 - **Lâcher une créature** : elle tombe (gravité simulée par code, sans moteur physique), touche le plan, s'écrase légèrement, rebondit, puis se stabilise debout et tournée vers l'utilisateur. Lâchée hors de la zone de bureau, elle est d'abord ramenée au point le plus proche de la zone.
 - **Repli tant qu'aucune calibration n'a eu lieu** : la table du scan MRUK si elle existe, sinon un point flottant devant l'utilisateur.
+
+### 5.2 Mémoire du bureau et changement de bureau
+
+L'app retient le bureau et la place de chaque créature d'une session à l'autre. L'utilisateur peut à tout moment en changer.
+
+- **Repère du bureau** : une ancre spatiale posée au centre de la zone, orientée face à l'utilisateur. Le plan, la zone et la position de chaque créature sont enregistrés dans ce repère. Les créatures y sont rattachées, donc elles suivent l'ancre si le casque recale sa position. Tout reste sur l'appareil.
+- **Plusieurs bureaux** : l'app garde une liste de bureaux, par exemple la maison et le travail. Au lancement, elle cherche leurs ancres. Le bureau retrouvé le plus récemment utilisé est restauré, créatures comprises, sans rien demander.
+- **Aucun bureau retrouvé** (première fois, nouvelle pièce, ancre perdue) : on lance la calibration. Les bureaux non retrouvés restent en mémoire pour le jour où l'utilisateur y revient.
+- **Recalibrer ou changer de bureau**, à tout moment (depuis le menu, plus tard depuis un geste) : l'utilisateur repose la main.
+  - Si le bureau actuel est retrouvé, on considère qu'il a bougé : on le remplace, et les créatures gardent leur disposition, ramenée dans la nouvelle zone.
+  - Sinon, on crée un nouveau bureau.
+- **Oublier un bureau** : depuis le menu, supprime ses données et son ancre.
+- **Positions des créatures** : chaque fois qu'une créature est posée (placement par défaut ou lâcher), sa position dans le repère du bureau est enregistrée.
+- **Un service réutilisable** : le reste de l'app (onboarding, menu, mode démo) peut :
+  - lancer ou annuler une calibration, recalibrer, oublier le bureau ;
+  - savoir si un bureau est prêt ;
+  - être prévenu quand il change ;
+  - demander un emplacement par défaut ou ramener un point dans la zone.
+- **Sans ancres** (éditeur sans casque, ou appareil qui les refuse) : tout fonctionne pendant la session, mais rien n'est mémorisé.
 
 ---
 
@@ -174,7 +207,7 @@ On ne compte pas sur le scan de la pièce pour connaître la hauteur du bureau. 
 5. Proposition : « Add more deskmates » avec 3 œufs (Calendar, Tasks, Messages), puis « Connect your Google account (optional) ».
 
 ### 6.2 Sessions suivantes
-- Les créatures **réapparaissent exactement où on les a laissées**, et le plan du bureau est conservé (ancres spatiales persistantes).
+- Les créatures **réapparaissent exactement où on les a laissées**, et le plan du bureau est conservé (ancres spatiales persistantes, §5.2). Si aucun bureau connu n'est retrouvé, l'app relance la calibration.
 - Petit récap de bienvenue : « Since yesterday: 12 emails handled, 3 meetings, 5 tasks done ».
 
 ### 6.3 Fin de journée
@@ -197,6 +230,23 @@ On ne compte pas sur le scan de la pièce pour connaître la hauteur du bureau. 
 - Scopes minimaux ; en mode test Google, seuls les comptes déclarés peuvent se connecter, ce qui suffit pour le concours.
 - **Polling** toutes les 60 s environ, avec un cache local. Aucune donnée envoyée à un serveur tiers : tout reste sur l'appareil.
 - Jetons stockés de façon sécurisée sur l'appareil. Bouton « Disconnect » qui efface tout.
+
+### 7.2 bis Agents de code (créature Agents)
+- Pour le concours : **mode démo uniquement**, comme Messages. Des sessions fictives (« refactor-auth », « fix-flaky-tests »…) passent par « en cours », « attend ta réponse », « terminée » ou « en erreur ».
+- Dans l'app, jamais de nom de produit : on dit « agents » ou « sessions », jamais le nom d'un outil ou d'une marque (§2.1, règle 5).
+- **Connexion réelle (recherche du 12 novembre)** : aucun des deux outils n'a d'API cloud publique pour lister les sessions d'un utilisateur et leur état. Il faut passer par l'ordinateur du développeur :
+  - **Hooks** des deux outils en ligne de commande, configurés une fois par l'utilisateur :
+    - en cours = envoi d'une demande (`UserPromptSubmit`) ;
+    - attend ta réponse = demande d'autorisation (`PermissionRequest`), ou notification d'attente pour l'un des outils ;
+    - terminée = `Stop` ;
+    - en erreur = `StopFailure` pour l'un, requête au modèle en échec pour l'autre.
+  - Ces hooks envoient leur JSON à un **petit relais local** sur l'ordinateur, qui tient l'état de chaque session et l'expose au casque sur le réseau local, protégé par un jeton.
+  - Le relais complète avec les commandes de liste fournies par les outils : la liste des sessions de la machine pour l'un, la liste des tâches cloud pour l'autre.
+  - **Limites** :
+    - les sessions lancées dans le cloud ou sur mobile ne sont pas toutes visibles par ce biais ;
+    - les données des hooks peuvent contenir des secrets : le relais ne transmet que l'identifiant, le dossier, l'état et l'heure.
+  - Coût : un compagnon à installer sur l'ordinateur, plus un serveur réseau dans l'app. À faire après le concours, sauf si tout le reste est prêt.
+- Panneau de détail : la session, son état, depuis quand ; action « vu » (fait baisser le stress, comme « marquer lu »).
 
 ### 7.3 Plus tard (hors périmètre concours)
 Outlook et Microsoft Teams (Microsoft Graph), Slack, Todoist, Linear, GitHub.
@@ -265,12 +315,13 @@ Assets/
       Main.unity
       Sandbox_Creature.unity   (test d'une créature seule, stress manuel)
     Scripts/
-      Core/              AppBootstrap, DeskCalibration, DeskPlane, DeskLocator (MRUK), AnchorStore
+      Core/              AppBootstrap, DeskLocator (MRUK)
+      Desk/              DeskSession, DeskCalibration, FlatHandDetector, DeskPlane, DeskStore, AnchorService, DropMotion
       Creatures/         Creature, CreatureFace, CreatureMotion, CreatureVfx, StressSmoother, CreatureConfig (SO)
       Data/              IDataSource, DemoDataSource, DemoScript (SO), Google/*, StressCalculators
       Interaction/       GazeTarget, PinchSelect, GrabAndDrop, SnoozeZone, PetDetector
       UI/                PeekBubble, DetailPanel, Onboarding, DailyRecap
-      Persistence/       SaveData (positions, snooze, streak)
+      Persistence/       SaveData (snooze, streak ; les positions sont dans DeskStore)
     Settings/
 ```
 
@@ -283,7 +334,10 @@ Assets/
 - **`DeskCalibration`** : écoute le geste « main à plat » pendant une calibration, mesure la hauteur, produit le `DeskPlane` (hauteur, centre, zone), l'affiche avec l'onde et le sauvegarde avec une ancre (§5.1).
 - **`DeskLocator`** : propose un emplacement par défaut sur le `DeskPlane`, devant l'utilisateur, dans le cône central. Utilise la table du scan MRUK pour les bords quand elle existe, ou en repli tant qu'aucune calibration n'a eu lieu.
 - **`GrabAndDrop`** : saisie d'une créature et chute avec rebond sur le `DeskPlane` au lâcher.
-- **`AnchorStore`** : crée, sauvegarde et recharge l'ancre de chaque créature. Si une ancre est perdue, la créature est replacée sur le bureau, au plus près de sa dernière position connue.
+- **`DeskSession`** : le service du §5.2. Restaure le bureau au lancement, lance les calibrations, remplace ou crée le bureau, enregistre les positions des créatures, et prévient quand le bureau change.
+- **`DeskStore`** : la liste des bureaux connus, en JSON sur l'appareil : ancre, zone, positions des créatures, date de dernière utilisation.
+- **`AnchorService`** : crée, retrouve et efface l'ancre d'un bureau. Il existe une version Meta (ancres spatiales) et une version en mémoire, pour l'éditeur et les tests.
+- **`FlatHandDetector`** et **`DropMotion`** : la détection du geste et la chute avec rebond, en classes simples testables sans casque.
 
 ### 9.2 Réglages par créature (`CreatureConfig`, ScriptableObject)
 Couleur au repos, gradient de stress, échelles par état, amplitudes et vitesses de mouvement, seuils d'expression, constantes du calcul de stress, sons.
@@ -339,10 +393,11 @@ Les modèles ont été générés dans Blender 5.2 par un script (`build_creatur
 | — | 17–18 nov. | Marge. **Aucune nouvelle fonctionnalité.** | — |
 
 ### 11.1 Ordre de coupe en cas de retard
-1. La créature **Messages**.
-2. La connexion **Google** réelle (le mode démo suffit pour le jugement).
-3. L'animation de soupir faite dans Blender (garder la version procédurale).
-4. Le récap du jour et la série.
+1. La créature **Agents** (ajoutée le 12 novembre, à 6 jours de la date limite).
+2. La créature **Messages**.
+3. La connexion **Google** réelle (le mode démo suffit pour le jugement).
+4. L'animation de soupir faite dans Blender (garder la version procédurale).
+5. Le récap du jour et la série.
 
 **Ne jamais couper** : le mode démo, l'onboarding, les ancres persistantes, les 60 fps, la vidéo, la marge de soumission.
 
@@ -366,6 +421,7 @@ Les modèles ont été générés dans Blender 5.2 par un script (`build_creatur
 - Synchronisation entre appareils ou compte utilisateur propre.
 - IA générative intégrée (risque de pénalité « wrapper »). Éventuellement un résumé local des mails plus tard.
 - Personnalisation avancée des créatures.
+- Connexion réelle aux sessions d'agents de code : relais local et hooks (§7.2 bis).
 - Monétisation.
 
 ---
@@ -374,7 +430,7 @@ Les modèles ont été générés dans Blender 5.2 par un script (`build_creatur
 
 | Risque | Parade |
 |---|---|
-| Ancres peu fiables (créatures qui sautent ou disparaissent) | Le tester dès que le casque est là ; replacement automatique sur le bureau si l'ancre est perdue. |
+| Ancres peu fiables (créatures qui sautent ou disparaissent) | Le tester dès que le casque est là. Une seule ancre par bureau, à laquelle les créatures sont rattachées. Si elle est perdue, on recalibre (§5.2). |
 | Pas de casque avant fin octobre | Tout développer dans le simulateur ; réserver une location ou un achat d'occasion **maintenant**. |
 | Pièce non scannée ou bureau non reconnu (probable chez les jurés), ou pas de scan sur les lunettes | Calibration à la main (§5.1), qui ne dépend d'aucun scan. |
 | Mesure imprécise de la main posée (épaisseur, suivi au contact de la surface) | Épaisseur réglable, onde de vérification visible, recalibrage en un geste ; mesurer sur casque dès son arrivée. |

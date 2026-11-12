@@ -5,7 +5,11 @@
         "Deskmates",
         "Oculus.VR",
         "Oculus.VR.Editor",
-        "meta.xr.mrutilitykit"
+        "meta.xr.mrutilitykit",
+        "Oculus.Interaction",
+        "Oculus.Interaction.Editor",
+        "Oculus.Interaction.OVR",
+        "Oculus.Interaction.OVR.Editor"
     ],
     "includePlatforms": [
         "Editor"

@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7d307b8b3e2884932900f2226e23b7db, type: 3}
+  m_Name: DeskCalibrationConfig
+  m_EditorClassIdentifier: Deskmates::Deskmates.Desk.DeskCalibrationConfig
+  flatTolerance: 0.025
+  stillRadius: 0.015
+  holdSeconds: 0.6
+  minDropBelowEyes: 0.25
+  handThickness: 0.008
+  oneHandZoneSize: {x: 1.2, y: 0.7}
+  twoHandMargin: 0.15
+  tableSnapDistance: 0.03

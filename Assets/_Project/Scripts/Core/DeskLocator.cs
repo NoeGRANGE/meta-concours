@@ -1,15 +1,33 @@
+using Deskmates.Desk;
 using Meta.XR.MRUtilityKit;
 using UnityEngine;
 
 namespace Deskmates.Core
 {
     /// <summary>
-    /// Finds the desk in the scanned room and proposes where a creature should sit on it.
+    /// Proposes where creatures sit: on the calibrated desk, or before any calibration on the scanned table.
     /// </summary>
     public static class DeskLocator
     {
         // Used when the room has no table: roughly desk height for a seated user.
         const float FloatingSpotDrop = 0.35f;
+
+        // Default row of creatures on the calibrated desk: spacing between them, how far behind the hand they sit,
+        // and the distance they keep from the zone edges, in metres.
+        const float RowSpacing = 0.14f;
+        const float RowDepth = 0.1f;
+        const float RowMargin = 0.06f;
+
+        /// <summary>
+        /// Spot <paramref name="index"/> of <paramref name="count"/> in a row across the calibrated desk, a little
+        /// behind where the hand rested, facing the user.
+        /// </summary>
+        public static Pose DefaultSpot(DeskPlane plane, Pose head, int index, int count)
+        {
+            float across = (index - (count - 1) * 0.5f) * RowSpacing;
+            Vector3 position = plane.ClampToZone(plane.ToWorld(new Vector3(across, 0f, RowDepth)), RowMargin);
+            return new Pose(position, FacingUser(position, head, HorizontalForward(head)));
+        }
 
         /// <summary>
         /// Returns a pose on top of the table nearest to the point <paramref name="forwardDistance"/> metres

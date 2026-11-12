@@ -25,6 +25,12 @@ Unity : `/Applications/Unity/Hub/Editor/6000.6.5f1/Unity.app/Contents/MacOS/Unit
   - touche D, ou case *Use Demo* : les quatre créatures suivent le scénario de démo ;
   - Espace déclenche le soupir de toutes.
 - **Mode démo** : l'objet « Data » (`DataHub`) des scènes joue `Settings/Data/DemoScript_Default.asset`. Son champ *Speed* accélère le scénario, pour la vidéo ou un test rapide.
+- **Bureau, dans `Main`** : sans main à poser, on utilise les raccourcis d'éditeur, vue Game active :
+  - C calibre sur la table scannée devant l'utilisateur, ou à défaut 40 cm sous les yeux ;
+  - R relance une calibration ;
+  - F oublie le bureau.
+
+  Dans le simulateur, mets *Left/Right input* sur *Hand* pour saisir les créatures. Les bureaux mémorisés sont dans `desks.json` (`Application.persistentDataPath`), mais seulement avec de vraies ancres (simulateur ou casque) : dans l'éditeur sans casque, rien n'est mémorisé.
 - Le test dans le XR Simulator se fait à la main : ouvrir `Main.unity`, Window > Meta > Meta XR Simulator > Activate, choisir l'environnement « Office », puis Play.
 
 Pièges déjà rencontrés :
@@ -42,7 +48,73 @@ Modèle d'entrée : titre et statut, date, objectif (renvoi au PRD), ce qui a é
 
 Découpage de la semaine 2 (PRD §11) : 2. créature vivante, 3. mode démo, 4. calibration du bureau et lâcher avec rebond, 5. regard et pincement (bulle d'aperçu).
 
-### 3. Mode démo (PRD §7.1, §7.4 et §4.4, S2) — En revue
+### 4. Bureau : calibration à la main, mémoire et lâcher avec rebond (PRD §5.1 et §5.2, S2) — En revue
+
+- **Date** : 18 octobre 2026.
+- **Objectif** : l'utilisateur indique son bureau en posant la main dessus. L'app retient ce bureau et la place des créatures d'une session à l'autre, et l'utilisateur peut en changer à tout moment. Le tout est un service que l'onboarding et le menu pourront appeler. Les créatures se saisissent à la main et retombent sur le bureau avec un rebond.
+- **Fait** :
+  - **PRD** :
+    - nouvelle §5.2 : mémoire du bureau, plusieurs bureaux, recalibrage, oubli, service réutilisable ;
+    - §5.1 ajustée : zone rectangulaire, main à plat détectée par les hauteurs, table MRUK pour la hauteur seulement ;
+    - composants (§9), parcours (§6.2) et risques (§14) mis à jour.
+  - **`FlatHandDetector`** : une ou deux mains à plat (articulations à la même hauteur à 2,5 cm près), immobiles 0,6 s, au moins 25 cm sous les yeux. L'immobilité se mesure comme une dérive de moins de 1,5 cm, pour tolérer les tremblements du suivi des mains. Hauteur = articulations les plus basses moins 8 mm. Classe simple, testable sans casque.
+  - **`DeskCalibration`** : n'écoute les mains (via l'Interaction SDK) que pendant une calibration. Construit le plan, orienté face à l'utilisateur, et le cale sur une table du scan MRUK à ±3 cm. Une onde lumineuse (`DeskRipple`) parcourt le plan mesuré.
+  - **`DeskSession`**, le service du §5.2. Son API :
+    - `RestoreAsync`, `Recalibrate`, `CancelCalibration`, `ForgetCurrentDeskAsync` ;
+    - `SavePlacement`, `TryGetPlacement`, `ClampToDesk` ;
+    - `Plane`, `HasDesk`, `IsCalibrating`, `Root`, et l'événement `DeskChanged`.
+
+    Une ancre par bureau, à laquelle les créatures sont rattachées. Recalibrer un bureau retrouvé le déplace en gardant la disposition des créatures ; sinon un nouveau bureau est créé et les anciens sont conservés.
+  - **`DeskStore`** : la liste des bureaux, en JSON sur l'appareil. **`IAnchorService`** : ancres spatiales Meta, ou ancres en mémoire pour l'éditeur et les tests.
+  - **`GrabAndDrop`** et **`DropMotion`** :
+    - saisie par l'Interaction SDK, à la main ou à distance (la créature vient dans la main) ;
+    - au lâcher : chute (gravité ×0,7), deux rebonds environ, retour dans la zone si besoin, puis la créature se redresse face à l'utilisateur ;
+    - sa place est enregistrée ;
+    - `CreatureMotion` écrase la créature à chaque impact.
+  - **`AppBootstrap`** : restaure le bureau connu, sinon lance la calibration. En attendant, le Facteur est sur la table du scan ; dès que le bureau est calibré, il tombe sur son emplacement par défaut (`DeskLocator.DefaultSpot`).
+  - **Scène `Main`** :
+    - rig d'interaction complet de Meta (mains, saisie, rayons), ajouté avec son API publique ;
+    - locomotion du rig désactivée, l'app s'utilisant assis ;
+    - objet « Desk Session » (calibration, onde, raccourcis d'éditeur C, R, F).
+- **Fichiers** :
+  - `Scripts/Desk/` (nouveau dossier), `Scripts/Interaction/GrabAndDrop.cs`.
+  - `Scripts/Core/AppBootstrap.cs` et `DeskLocator.cs`, `Scripts/Creatures/CreatureMotion.cs`, les asmdef.
+  - `Editor/ProjectSetup.cs`, `PRD.md`.
+  - Tests : `Tests/EditMode/FlatHandDetectorTests.cs` et `DeskGeometryTests.cs` ; `Tests/PlayMode/DeskSessionTests.cs` et `MainDeskFlowTests.cs`.
+  - Générés : `Settings/Desk/DeskCalibrationConfig.asset`, les 4 prefabs (collider, saisie Meta, `GrabAndDrop`), `Scenes/Main.unity`.
+- **Vérifié** :
+  - 43 tests EditMode, dont 14 nouveaux :
+    - le geste : main à plat et immobile, durée minimale, main qui glisse, tremblement toléré, main inclinée, main trop près des yeux, perte de suivi, deux mains moyennées ;
+    - les repères du plan et la zone ;
+    - la chute : rebonds, repos en moins d'une seconde ;
+    - la mémoire JSON : aller-retour, fichier corrompu.
+  - 22 tests PlayMode, dont 5 nouveaux, avec des ancres simulées en mémoire :
+    - un bureau calibré est retrouvé après redémarrage avec la place du Facteur ;
+    - un bureau déplacé emmène la créature, et seul le nouveau est gardé ;
+    - dans une autre pièce, un nouveau bureau est créé, l'ancien est conservé, puis on peut l'oublier ;
+    - une créature lâchée hors de la zone y revient ;
+    - dans `Main`, sans bureau connu, la calibration démarre ; une fois le bureau calibré, le Facteur y tombe et sa place est retenue.
+  - Aucune exception dans les logs, seulement l'absence de casque côté OpenXR.
+- **Retouche du 18 octobre**, après un premier essai dans le simulateur où C semblait sans effet :
+  - Le bureau est utilisable dès la calibration ; l'ancre est créée et enregistrée ensuite, en arrière-plan. `DeskSession.Persisting` permet d'attendre cette étape.
+  - Messages `[Deskmates]` dans la Console : touches C, R, F, bureau calibré, ancré, restauré.
+  - Les 65 tests repassent.
+- **Pas encore vérifié** :
+  - le geste avec de vraies mains, et l'épaisseur de 8 mm (casque) ;
+  - les vraies ancres Meta : sauvegarde, puis recherche au lancement (simulateur ou casque) ;
+  - la saisie à la main et à distance dans le simulateur ;
+  - l'aspect de l'onde et de la chute à l'œil.
+- **Décisions à valider** :
+  - Zone rectangulaire de 1,2 × 0,7 m au lieu du disque de 60 cm (PRD mis à jour).
+  - Main à plat acceptée paume vers le bas ou vers le haut : seules les hauteurs comptent.
+  - Pour une table MRUK, on reprend la hauteur mais pas encore les bords.
+  - Dans une même pièce, recalibrer remplace le bureau, puisqu'on considère qu'il a bougé. Pour garder deux bureaux dans la même pièce, il faudrait un choix explicite, dans le futur menu.
+  - Saisie à distance : la créature vient dans la main (*PullToHand*).
+  - Locomotion du rig de Meta désactivée.
+  - Pas encore d'indication visuelle pendant la calibration (main fantôme) : elle viendra avec l'onboarding (S4).
+  - Au premier placement, le Facteur tombe de 20 cm ; l'onde s'étend sur 30 cm de rayon. Réglés par l'utilisateur après essai dans le simulateur.
+
+### 3. Mode démo (PRD §7.1, §7.4 et §4.4, S2) — Validée (`9a103f7`)
 
 - **Date** : 18 octobre 2026.
 - **Objectif** : les créatures réagissent à de fausses données réalistes qui évoluent sur 3 minutes, à travers la même interface que les futures vraies sources.
