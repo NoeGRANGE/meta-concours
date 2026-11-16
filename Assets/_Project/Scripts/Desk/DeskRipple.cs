@@ -1,3 +1,4 @@
+using Deskmates.Core;
 using UnityEngine;
 
 namespace Deskmates.Desk
@@ -34,6 +35,7 @@ namespace Deskmates.Desk
         {
             // Just above the surface so the real desk does not hide it.
             center = plane.Center + Vector3.up * 0.002f;
+            SoundBank.Play(Sound.Ripple, center);
             time = 0f;
             line.enabled = true;
         }

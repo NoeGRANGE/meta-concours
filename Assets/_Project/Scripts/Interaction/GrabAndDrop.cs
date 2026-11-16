@@ -1,4 +1,5 @@
 using System;
+using Deskmates.Core;
 using Deskmates.Creatures;
 using Deskmates.Desk;
 using Oculus.Interaction;
@@ -76,6 +77,17 @@ namespace Deskmates.Interaction
             landing = plane.ClampToZone(transform.position, edgeMargin);
             drop = new DropMotion(transform.position.y - plane.Height, 9.81f * gravityScale, restitution);
             drop.Bounced += motion.PlayLanding;
+
+            // The landing sound already holds the small second bounce, so it plays on the first impact only.
+            bool landed = false;
+            drop.Bounced += _ =>
+            {
+                if (!landed)
+                {
+                    landed = true;
+                    SoundBank.Play(Sound.Landing, transform.position);
+                }
+            };
         }
 
         void OnPointerEvent(PointerEvent pointerEvent)

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Deskmates.Core;
 using Deskmates.Data;
 using Deskmates.Interaction;
 using UnityEngine;
@@ -57,6 +58,7 @@ namespace Deskmates.UI
 
         public void Open(CreatureInfo creature)
         {
+            SoundBank.Play(Sound.PanelOpen, creature.transform.position);
             Creature = creature;
             lookedAwayFor = 0f;
             if (accent != null)
@@ -70,6 +72,11 @@ namespace Deskmates.UI
 
         public void Close()
         {
+            if (Creature != null)
+            {
+                SoundBank.Play(Sound.PanelClose, Creature.transform.position);
+            }
+
             Creature = null;
             canvas.gameObject.SetActive(false);
         }
@@ -83,7 +90,13 @@ namespace Deskmates.UI
                 return;
             }
 
-            await source.PerformAsync(action.Value, shown[row].Id);
+            Vector3 at = Creature.transform.position;
+            if (await source.PerformAsync(action.Value, shown[row].Id))
+            {
+                // Up to a semitone higher or lower each time, so several in a row do not sound mechanical.
+                SoundBank.Play(Sound.ItemHandled, at, Mathf.Pow(2f, Random.Range(-1f, 1f) / 12f));
+            }
+
             Refresh();
         }
 

@@ -39,6 +39,7 @@ namespace Deskmates.Tests
             yield return new WaitUntil(() => load.IsCompleted);
             yield return null;
 
+            Assert.IsNotNull(Object.FindAnyObjectByType<SoundBank>(), "Main has its sounds.");
             Creature mail = Object.FindAnyObjectByType<AppBootstrap>().MailCreature;
             CreatureInfo info = mail.GetComponent<CreatureInfo>();
             Assert.IsNotNull(info, "The mail creature cannot be looked at.");

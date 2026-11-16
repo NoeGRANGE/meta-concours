@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using Deskmates.Core;
 using Deskmates.Data;
 using UnityEngine;
 
@@ -32,6 +33,7 @@ namespace Deskmates.Creatures
         CreatureDataLink link;
         MaterialPropertyBlock block;
         int doneBefore;
+        int waitingBefore;
         float blinkTime = float.MaxValue;
 
         void Awake()
@@ -83,7 +85,14 @@ namespace Deskmates.Creatures
                 return;
             }
 
-            bool waiting = sessions.Any(s => s.State == AgentStates.Waiting);
+            int waitingCount = sessions.Count(s => s.State == AgentStates.Waiting);
+            if (waitingCount > waitingBefore)
+            {
+                SoundBank.Play(Sound.AgentWaiting, lens.transform.position);
+            }
+
+            waitingBefore = waitingCount;
+            bool waiting = waitingCount > 0;
             float glow = waiting ? lampGlow * (0.75f + 0.25f * Mathf.Sin(Time.time * pulseSpeed)) : 0f;
             if (blinkTime < blinkSeconds * 4f)
             {

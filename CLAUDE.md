@@ -48,6 +48,16 @@ Modèle d'entrée : titre et statut, date, objectif (renvoi au PRD), ce qui a é
 
 Découpage de la semaine 2 (PRD §11) : 2. créature vivante, 3. mode démo, 4. calibration du bureau et lâcher avec rebond, 5. regard et pincement (bulle d'aperçu).
 
+### 11. Sons (STYLE.md §6) — Validée (hash dans le commit suivant)
+
+- **Date** : 16 novembre 2026.
+- **Fait** :
+  - 24 sons originaux synthétisés (`SourceArt/sounds/generate_sounds.py`, numpy, aucun son tiers), proposés dans `SourceArt/sounds/propositions.html`. L'utilisateur a choisi (volumes) : atterrissage A (30 %), soupir C (45 %), ouverture et fermeture du panneau avec le son B de la bulle (25 % et 15 %), élément traité B (30 %, hauteur variée d'un demi-ton au plus), calibration B (35 %), arrivée de la famille A (35 %), session en attente C (25 %), souffle de flammes B (8 %). Aucun son pour la bulle.
+  - `SoundBank` (objet « Sounds » de `Main`) : 8 voix 3D, chaque son joué là où il se produit. Sans banque (sandbox, tests), les sons sont ignorés.
+  - Branchements : premier impact d'une chute, soupir, ouverture et fermeture du panneau, élément marqué, onde de calibration, arrivée de la famille, nouvelle session en attente. Le Facteur seul (il a des flammes) a un souffle en boucle, en fondu, seulement en panique.
+  - Les WAV intermédiaires de `SourceArt/sounds/` sont ignorés par git (régénérables) ; les 8 retenus sont dans `Art/Audio/`, sans normalisation d'Unity.
+- **Vérifié** : 49 tests EditMode et 25 PlayMode passent. Pas encore écouté sur le casque.
+
 ### 10. Contour au regard, et mesure des fps (PRD §5 et §8.2) — Validée (`483e9a2`)
 
 - **Date** : 16 novembre 2026.

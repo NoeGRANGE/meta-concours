@@ -47,6 +47,20 @@ namespace Deskmates.Editor
         const string UiFontPath = "Assets/_Project/Art/Fonts/Lato-Regular.ttf";
         const string RoundedSpritePath = "Assets/_Project/Art/UI/Rounded.png";
         const string OutlineMaterialPath = "Assets/_Project/Art/Materials/GazeOutline.mat";
+        const string AudioFolder = "Assets/_Project/Art/Audio";
+
+        // The sounds chosen by the user from SourceArt/sounds/propositions.html, and their volumes.
+        static readonly (Sound sound, string clip, float volume)[] Sounds =
+        {
+            (Sound.Landing, "landing", 0.30f),
+            (Sound.Sigh, "sigh", 0.45f),
+            (Sound.PanelOpen, "panel", 0.25f),
+            (Sound.PanelClose, "panel", 0.15f),
+            (Sound.ItemHandled, "item", 0.30f),
+            (Sound.Ripple, "ripple", 0.35f),
+            (Sound.FamilyArrives, "family", 0.35f),
+            (Sound.AgentWaiting, "agent_waiting", 0.25f),
+        };
 
         // Interface palette, taken from the creatures (STYLE.md): warm cream card, cocoa ink.
         static readonly Color UiCard = new Color32(0xFB, 0xF6, 0xEE, 0xF2);
@@ -289,6 +303,26 @@ namespace Deskmates.Editor
                     GetOrAddComponent<PopIn>(onboarding.GetComponentInChildren<Canvas>(true).gameObject);
                 }
 
+                // A few soft sounds (STYLE.md 6), played where they happen.
+                SoundBank bank = Object.FindAnyObjectByType<SoundBank>(FindObjectsInactive.Include);
+                if (bank == null)
+                {
+                    bank = new GameObject("Sounds").AddComponent<SoundBank>();
+                }
+
+                SetSerialized(bank, "entries", property =>
+                {
+                    property.arraySize = Sounds.Length;
+                    for (int i = 0; i < Sounds.Length; i++)
+                    {
+                        SerializedProperty entry = property.GetArrayElementAtIndex(i);
+                        entry.FindPropertyRelative("sound").enumValueIndex = (int)Sounds[i].sound;
+                        entry.FindPropertyRelative("clip").objectReferenceValue =
+                            AssetDatabase.LoadAssetAtPath<AudioClip>($"{AudioFolder}/{Sounds[i].clip}.wav");
+                        entry.FindPropertyRelative("volume").floatValue = Sounds[i].volume;
+                    }
+                });
+
                 // Look and pinch (PRD 5): the gaze selector and the shared detail panel.
                 GazeSelector gaze = Object.FindAnyObjectByType<GazeSelector>();
                 if (gaze == null)
@@ -409,6 +443,12 @@ namespace Deskmates.Editor
                 if (sourceId == SourceIds.Agents)
                 {
                     GetOrAddComponent<AgentsLamp>(root);
+                }
+
+                if (sourceId == SourceIds.Mail)
+                {
+                    AudioClip flames = AssetDatabase.LoadAssetAtPath<AudioClip>($"{AudioFolder}/flame_loop.wav");
+                    SetSerialized(creature, "panicLoop", property => property.objectReferenceValue = flames);
                 }
 
                 Transform puffTransform = root.transform.Find(SighPuffName);

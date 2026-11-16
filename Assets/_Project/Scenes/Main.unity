@@ -1198,6 +1198,75 @@ Transform:
   - {fileID: 748490822}
   m_Father: {fileID: 245148867}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &855829204
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 855829206}
+  - component: {fileID: 855829205}
+  m_Layer: 0
+  m_Name: Sounds
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &855829205
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 855829204}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a349a75098714d23ae65f883444a2b49, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Deskmates::Deskmates.Core.SoundBank
+  entries:
+  - sound: 0
+    clip: {fileID: 8300000, guid: e4ff8f30fe58422abfdee9dc647295fa, type: 3}
+    volume: 0.3
+  - sound: 1
+    clip: {fileID: 8300000, guid: db49cea57b8645e8b2720ab99716e160, type: 3}
+    volume: 0.45
+  - sound: 2
+    clip: {fileID: 8300000, guid: 9963668336ba431e8f6d7e6e43e03c77, type: 3}
+    volume: 0.25
+  - sound: 3
+    clip: {fileID: 8300000, guid: 9963668336ba431e8f6d7e6e43e03c77, type: 3}
+    volume: 0.15
+  - sound: 4
+    clip: {fileID: 8300000, guid: 0da5d944aae54bc7ac90e7db4df1d3b2, type: 3}
+    volume: 0.3
+  - sound: 5
+    clip: {fileID: 8300000, guid: 1435a788d75341e09e9a2036309783a2, type: 3}
+    volume: 0.35
+  - sound: 6
+    clip: {fileID: 8300000, guid: 734422b3e5014f3c93d16a69916d82bb, type: 3}
+    volume: 0.35
+  - sound: 7
+    clip: {fileID: 8300000, guid: 02ae75ec3fcf4f48a290fedb94d4c2e5, type: 3}
+    volume: 0.25
+--- !u!4 &855829206
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 855829204}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &863541281
 GameObject:
   m_ObjectHideFlags: 0
@@ -2438,3 +2507,4 @@ SceneRoots:
   - {fileID: 2089346067}
   - {fileID: 1312493941}
   - {fileID: 438973017}
+  - {fileID: 855829206}

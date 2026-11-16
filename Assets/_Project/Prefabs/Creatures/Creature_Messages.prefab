@@ -2603,6 +2603,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Deskmates::Deskmates.Creatures.Creature
   config: {fileID: 11400000, guid: 23205aefeec9246409da51ab04c40951, type: 2}
+  panicLoop: {fileID: 0}
+  panicLoopVolume: 0.08
 --- !u!114 &6363785253695783797
 MonoBehaviour:
   m_ObjectHideFlags: 0

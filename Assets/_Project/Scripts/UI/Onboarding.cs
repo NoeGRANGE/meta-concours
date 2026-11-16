@@ -111,6 +111,7 @@ namespace Deskmates.UI
                 {
                     SetDemoSpeed(demoSpeed);
                     app.Reveal(int.MaxValue);
+                    SoundBank.Play(Sound.FamilyArrives, mail.transform.position);
                     MarkDone();
                     Go(Step.Farewell);
                 }
