@@ -34,6 +34,15 @@ namespace Deskmates.UI
         [SerializeField] float introSeconds = 5f;
         [SerializeField] float farewellSeconds = 6f;
 
+        [Tooltip("How long the 'keep working' hint stays before the card hides.")]
+        [SerializeField] float waitHintSeconds = 4f;
+
+        [Tooltip("The demo runs this much faster while waiting for the mail creature to worry, so the first moment comes quickly.")]
+        [SerializeField] float waitSpeedUp = 4f;
+
+        [Tooltip("The rest of the family joins after this long even without a sigh, so no one stays stuck with one creature.")]
+        [SerializeField] float familyAfterSeconds = 90f;
+
         enum Step { Desk, Intro, Wait, Look, Clear, Farewell, Done }
 
         Step step;
@@ -42,6 +51,7 @@ namespace Deskmates.UI
         Creature mail;
         bool relieved;
         bool shown;
+        float sinceMailLanded;
 
         public static bool IsDone => DoneOverride ?? PlayerPrefs.GetInt(DoneKey, 0) == 1;
 
@@ -91,12 +101,19 @@ namespace Deskmates.UI
 
         string Advance()
         {
-            if (step != Step.Done && step != Step.Desk && step != Step.Farewell && relieved)
+            if (step != Step.Done && step != Step.Desk && step != Step.Farewell)
             {
-                // The sigh is the reward: now the rest of the family drops in.
-                app.Reveal(int.MaxValue);
-                MarkDone();
-                Go(Step.Farewell);
+                // The sigh is the reward and brings the rest of the family. Clearing the inbox before the creature got
+                // worried enough to sigh, or simply waiting, brings them too.
+                sinceMailLanded += Time.deltaTime;
+                bool cleared = step == Step.Clear && MailCount() == 0;
+                if (relieved || cleared || sinceMailLanded >= familyAfterSeconds)
+                {
+                    SetDemoSpeed(demoSpeed);
+                    app.Reveal(int.MaxValue);
+                    MarkDone();
+                    Go(Step.Farewell);
+                }
             }
 
             switch (step)
@@ -107,11 +124,7 @@ namespace Deskmates.UI
                         app.Reveal(1);
                         mail = app.MailCreature;
                         mail.Relieved += OnRelieved;
-                        if (DataHub.Instance != null)
-                        {
-                            DataHub.Instance.Speed = demoSpeed;
-                        }
-
+                        SetDemoSpeed(demoSpeed);
                         Go(Step.Intro);
                     }
 
@@ -119,19 +132,26 @@ namespace Deskmates.UI
                 case Step.Intro:
                     if (stepTime >= introSeconds)
                     {
+                        SetDemoSpeed(demoSpeed * waitSpeedUp);
                         Go(Step.Wait);
                     }
 
                     return "This is your Mail Fretling\n<size=22>It worries about your inbox so you don't have to</size>";
                 case Step.Wait:
-                    if (mail.Expression >= CreatureExpression.Stressed)
+                    if (PanelOpen())
                     {
+                        SetDemoSpeed(demoSpeed);
+                        Go(Step.Clear);
+                    }
+                    else if (mail.Expression >= CreatureExpression.Stressed)
+                    {
+                        SetDemoSpeed(demoSpeed);
                         Go(Step.Look);
                     }
 
-                    return "Keep working\n<size=22>It will let you know when mail needs you</size>";
+                    return stepTime < waitHintSeconds ? "Keep working\n<size=22>It will let you know when mail needs you</size>" : null;
                 case Step.Look:
-                    if (DetailPanel.Instance != null && DetailPanel.Instance.Creature != null)
+                    if (PanelOpen())
                     {
                         Go(Step.Clear);
                     }
@@ -158,6 +178,22 @@ namespace Deskmates.UI
         }
 
         void OnRelieved() => relieved = true;
+
+        static bool PanelOpen() => DetailPanel.Instance != null && DetailPanel.Instance.Creature != null;
+
+        static int MailCount()
+        {
+            IDataSource source = DataHub.Instance != null ? DataHub.Instance.GetSource(SourceIds.Mail) : null;
+            return source != null ? source.Current.Items.Count : -1;
+        }
+
+        static void SetDemoSpeed(float speed)
+        {
+            if (DataHub.Instance != null)
+            {
+                DataHub.Instance.Speed = speed;
+            }
+        }
 
         static void MarkDone()
         {

@@ -50,6 +50,7 @@ namespace Deskmates.Tests
         [TearDown]
         public void TearDown()
         {
+            Time.timeScale = 1f;
             Onboarding.DoneOverride = true;
             DeskSession.ServicesOverride = null;
             System.IO.File.Delete(storePath);
@@ -100,6 +101,43 @@ namespace Deskmates.Tests
             }
 
             StringAssert.Contains("Meet your Fretlings", card.text);
+        }
+
+        [UnityTest]
+        public IEnumerator ClearingTheMailCreaturesInboxBringsTheFamilyEvenWithoutASigh()
+        {
+            LogAssert.ignoreFailingMessages = true;
+            yield return EditorSceneManager.LoadSceneAsyncInPlayMode(MainScenePath, new LoadSceneParameters(LoadSceneMode.Single));
+            yield return null;
+            Task<MRUK.LoadDeviceResult> load =
+                MRUK.Instance.LoadSceneFromPrefab(AssetDatabase.LoadAssetAtPath<GameObject>(RoomPath));
+            yield return new WaitUntil(() => load.IsCompleted);
+            yield return null;
+
+            AppBootstrap app = Object.FindAnyObjectByType<AppBootstrap>();
+            DeskSession.Instance.Calibration.Complete(DeskCalibration.MeasurementAt(app.MailCreature.transform.position));
+            yield return null;
+
+            // Past the introduction, the user pinches the creature and handles every mail, worried or not.
+            Time.timeScale = 10f;
+            yield return new WaitForSeconds(6f);
+            Time.timeScale = 1f;
+            Assert.IsFalse(app.Creatures[1].gameObject.activeSelf, "The family is still waiting.");
+
+            app.MailCreature.GetComponent<CreatureInfo>().OnPinch();
+            DetailPanel panel = DetailPanel.Instance;
+            for (int guard = 0; guard < 10 && panel.Shown.Count > 0; guard++)
+            {
+                panel.Resolve(0);
+                yield return null;
+            }
+
+            yield return null;
+            yield return null;
+            foreach (Creature creature in app.Creatures)
+            {
+                Assert.IsTrue(creature.gameObject.activeSelf, "An empty inbox brings the whole family.");
+            }
         }
     }
 }
