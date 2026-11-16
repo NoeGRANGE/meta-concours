@@ -44,3 +44,6 @@ Thumbs.db
 /RuntimeActionBindings.json
 /Assets/StreamingAssets/RuntimeActionBindings.json
 /Assets/StreamingAssets/RuntimeActionBindings.json.meta
+
+# Temporary files of Unity Android builds
+.utmp/
