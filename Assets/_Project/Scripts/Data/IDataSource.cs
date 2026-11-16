@@ -18,8 +18,18 @@ namespace Deskmates.Data
         public const string Calendar = "calendar";
         public const string Tasks = "tasks";
         public const string Messages = "messages";
+        public const string Agents = "agents";
 
-        public static readonly string[] All = { Mail, Calendar, Tasks, Messages };
+        public static readonly string[] All = { Mail, Calendar, Tasks, Messages, Agents };
+    }
+
+    /// <summary>The states of a coding-agent session (PRD 4.6 and 7.2 bis), carried by <see cref="SourceItem.State"/>.</summary>
+    public static class AgentStates
+    {
+        public const string Running = "running";
+        public const string Waiting = "waiting";
+        public const string Done = "done";
+        public const string Failed = "failed";
     }
 
     /// <summary>

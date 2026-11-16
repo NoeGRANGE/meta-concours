@@ -16,9 +16,14 @@ namespace Deskmates.UI
 
         [SerializeField] Text peekText;
 
+        [Tooltip("The creature's own colour, used for the accent of its panel.")]
+        [SerializeField] Color accent = new Color32(0xF1, 0xA6, 0x61, 0xFF);
+
         CreatureDataLink link;
 
         public string SourceId => link.SourceId;
+
+        public Color Accent => accent;
 
         void Awake()
         {

@@ -29,6 +29,9 @@ namespace Deskmates.Data.Demo
         public string detail;
         public bool important;
 
+        [Tooltip("Agent sessions only: running, waiting, done or failed. Adding the same item again changes its state.")]
+        public string state;
+
         [Tooltip("Item time relative to the demo clock when the event fires, in demo minutes: when a mail or message " +
                  "arrived (negative), when a meeting starts or a task is due.")]
         public float minutesFromNow;

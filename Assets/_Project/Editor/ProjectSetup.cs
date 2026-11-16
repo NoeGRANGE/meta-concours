@@ -62,13 +62,15 @@ namespace Deskmates.Editor
         const string MrukPrefabPath = "Packages/com.meta.xr.mrutilitykit/Core/Tools/MRUK.prefab";
         const string MailCreaturePrefab = "Creature_Mail";
 
-        // Model file, prefab name (PRD 9), colour at rest (PRD 4.2), data source and stress formula (PRD 4.4).
-        static readonly (string model, string prefab, Color32 restColor, string sourceId, Type stress)[] Creatures =
+        // Model file, prefab name (PRD 9), colour at rest (PRD 4.2), data source, stress formula (PRD 4.4), and the
+        // accent of its panel: a deeper tone of its accessory, readable on the cream card (STYLE.md).
+        static readonly (string model, string prefab, Color32 restColor, string sourceId, Type stress, Color32 accent)[] Creatures =
         {
-            ("Facteur", MailCreaturePrefab, new Color32(0xEF, 0xE6, 0xD8, 0xFF), SourceIds.Mail, typeof(MailStress)),
-            ("Reunions", "Creature_Calendar", new Color32(0xDC, 0xE3, 0xE6, 0xFF), SourceIds.Calendar, typeof(CalendarStress)),
-            ("Taches", "Creature_Tasks", new Color32(0xE6, 0xDC, 0xEB, 0xFF), SourceIds.Tasks, typeof(TasksStress)),
-            ("Messages", "Creature_Messages", new Color32(0xD7, 0xE3, 0xCF, 0xFF), SourceIds.Messages, typeof(MessagesStress)),
+            ("Facteur", MailCreaturePrefab, new Color32(0xEF, 0xE6, 0xD8, 0xFF), SourceIds.Mail, typeof(MailStress), new Color32(0x5B, 0x7F, 0xB8, 0xFF)),
+            ("Reunions", "Creature_Calendar", new Color32(0xDC, 0xE3, 0xE6, 0xFF), SourceIds.Calendar, typeof(CalendarStress), new Color32(0x7E, 0x9A, 0xA8, 0xFF)),
+            ("Taches", "Creature_Tasks", new Color32(0xE6, 0xDC, 0xEB, 0xFF), SourceIds.Tasks, typeof(TasksStress), new Color32(0xA5, 0x8B, 0xB5, 0xFF)),
+            ("Messages", "Creature_Messages", new Color32(0xD7, 0xE3, 0xCF, 0xFF), SourceIds.Messages, typeof(MessagesStress), new Color32(0x8D, 0xAA, 0x7C, 0xFF)),
+            ("Agents", "Creature_Agents", new Color32(0xD9, 0xE4, 0xEC, 0xFF), SourceIds.Agents, typeof(AgentsStress), new Color32(0xE0, 0xB0, 0x3A, 0xFF)),
         };
 
         [MenuItem("Deskmates/Setup/1. Configure Project")]
@@ -92,12 +94,12 @@ namespace Deskmates.Editor
             Directory.CreateDirectory(CreatureConfigsFolder);
             Directory.CreateDirectory(StressCalculatorsFolder);
             AssetDatabase.Refresh();
-            foreach ((string model, string prefab, Color32 restColor, string sourceId, Type stress) in Creatures)
+            foreach ((string model, string prefab, Color32 restColor, string sourceId, Type stress, Color32 accent) in Creatures)
             {
                 CreatureConfig config = EnsureCreatureConfig(prefab, restColor);
                 StressCalculator calculator = EnsureStressCalculator(prefab, stress);
                 CreateCreaturePrefab(model, prefab);
-                UpdateCreaturePrefab(prefab, config, sourceId, calculator);
+                UpdateCreaturePrefab(prefab, config, sourceId, calculator, accent);
             }
 
             AssetDatabase.SaveAssets();
@@ -276,9 +278,14 @@ namespace Deskmates.Editor
                 });
 
                 // First-run walkthrough and hand prompt (PRD 6.1), on a card in front of the user.
-                if (Object.FindAnyObjectByType<Onboarding>(FindObjectsInactive.Include) == null)
+                Onboarding onboarding = Object.FindAnyObjectByType<Onboarding>(FindObjectsInactive.Include);
+                if (onboarding == null)
                 {
                     CreateOnboarding(app, session, head);
+                }
+                else
+                {
+                    GetOrAddComponent<PopIn>(onboarding.GetComponentInChildren<Canvas>(true).gameObject);
                 }
 
                 // Look and pinch (PRD 5): the gaze selector and the shared detail panel.
@@ -289,9 +296,10 @@ namespace Deskmates.Editor
                 }
 
                 SetSerialized(gaze, "head", property => property.objectReferenceValue = head);
-                // A panel from before the rounded style is rebuilt; a current one is kept, so the scene does not churn.
+                // A panel from before the current style (with its accent pill) is rebuilt; a current one is kept, so
+                // the scene does not churn.
                 DetailPanel existing = Object.FindAnyObjectByType<DetailPanel>(FindObjectsInactive.Include);
-                bool current = existing != null && existing.GetComponentInChildren<Image>(true).sprite != null;
+                bool current = existing != null && existing.transform.Find("Canvas/Accent") != null;
                 if (existing != null && !current)
                 {
                     Object.DestroyImmediate(existing.gameObject);
@@ -381,7 +389,7 @@ namespace Deskmates.Editor
 
         // Adds whatever components or references a creature prefab is missing. The model is the root's first child.
         static void UpdateCreaturePrefab(string prefabName, CreatureConfig config, string sourceId,
-            StressCalculator calculator)
+            StressCalculator calculator, Color accent)
         {
             string prefabPath = PrefabPath(prefabName);
             GameObject root = PrefabUtility.LoadPrefabContents(prefabPath);
@@ -394,7 +402,11 @@ namespace Deskmates.Editor
                 CreatureDataLink link = GetOrAddComponent<CreatureDataLink>(root);
                 GetOrAddComponent<CreatureFace>(root);
                 EnsureGrab(root, sourceId);
-                EnsurePeek(root);
+                EnsurePeek(root, accent);
+                if (sourceId == SourceIds.Agents)
+                {
+                    GetOrAddComponent<AgentsLamp>(root);
+                }
 
                 Transform puffTransform = root.transform.Find(SighPuffName);
                 ParticleSystem puff = puffTransform != null
@@ -456,7 +468,7 @@ namespace Deskmates.Editor
 
         // Pinching at a distance selects (opens the panel), so a creature is only grabbed by a hand next to it.
         // Prefabs built before this keep a distance grab child: remove it.
-        static void EnsurePeek(GameObject root)
+        static void EnsurePeek(GameObject root, Color accent)
         {
             Transform distanceGrab = root.transform.Find("ISDK_DistanceHandGrabInteraction");
             if (distanceGrab != null)
@@ -464,9 +476,13 @@ namespace Deskmates.Editor
                 Object.DestroyImmediate(distanceGrab.gameObject);
             }
 
-            // A bubble from before the rounded style is rebuilt; a current one is kept, so prefabs do not churn.
+            CreatureInfo info = GetOrAddComponent<CreatureInfo>(root);
+            SetSerialized(info, "accent", property => property.colorValue = accent);
+
+            // A bubble from before the current style (with its tail) is rebuilt; a current one is kept, so prefabs
+            // do not churn.
             Transform oldPeek = root.transform.Find("Peek");
-            if (oldPeek != null && oldPeek.GetComponent<Image>().sprite != null)
+            if (oldPeek != null && oldPeek.Find("Tail") != null)
             {
                 return;
             }
@@ -478,11 +494,19 @@ namespace Deskmates.Editor
 
             Canvas peek = CreateWorldCanvas("Peek", root.transform, new Vector2(440f, 72f));
             peek.transform.localPosition = new Vector3(0f, 0.14f, 0f);
+            peek.gameObject.AddComponent<PopIn>();
+
+            // A small diamond under the bubble, pointing at its creature.
+            GameObject tail = new GameObject("Tail", typeof(RectTransform));
+            tail.transform.SetParent(peek.transform, false);
+            Place((RectTransform)tail.transform, 0f, -36f, 22f, 22f);
+            tail.transform.localRotation = Quaternion.Euler(0f, 0f, 45f);
+            tail.AddComponent<Image>().color = UiCard;
+
             Text text = CreateText(peek.transform, "Text", 28, TextAnchor.MiddleCenter);
             Stretch(text.rectTransform);
             text.rectTransform.offsetMin = new Vector2(18f, 0f);
             text.rectTransform.offsetMax = new Vector2(-18f, 0f);
-            CreatureInfo info = GetOrAddComponent<CreatureInfo>(root);
             SetSerialized(info, "peek", property => property.objectReferenceValue = peek);
             SetSerialized(info, "peekText", property => property.objectReferenceValue = text);
         }
@@ -493,6 +517,14 @@ namespace Deskmates.Editor
             const float rowHeight = 70f;
             DetailPanel panel = new GameObject("Detail Panel").AddComponent<DetailPanel>();
             Canvas canvas = CreateWorldCanvas("Canvas", panel.transform, new Vector2(width, 330f));
+            canvas.gameObject.AddComponent<PopIn>();
+
+            // A pill at the top in the colour of the creature the panel belongs to (set when it opens).
+            GameObject pill = new GameObject("Accent", typeof(RectTransform));
+            pill.transform.SetParent(canvas.transform, false);
+            Place((RectTransform)pill.transform, 0f, 152f, 72f, 10f);
+            Image accent = pill.AddComponent<Image>();
+            Round(accent, 5f);
 
             Text title = CreateText(canvas.transform, "Title", 26, TextAnchor.MiddleCenter);
             title.fontStyle = FontStyle.Bold;
@@ -525,6 +557,7 @@ namespace Deskmates.Editor
             SetSerialized(panel, "canvas", property => property.objectReferenceValue = canvas);
             SetSerialized(panel, "title", property => property.objectReferenceValue = title);
             SetSerialized(panel, "hint", property => property.objectReferenceValue = hint);
+            SetSerialized(panel, "accent", property => property.objectReferenceValue = accent);
             SetSerialized(panel, "rows", property =>
             {
                 property.arraySize = rows.Length;
@@ -539,6 +572,7 @@ namespace Deskmates.Editor
         {
             Onboarding onboarding = new GameObject("Onboarding").AddComponent<Onboarding>();
             Canvas card = CreateWorldCanvas("Card", onboarding.transform, new Vector2(620f, 130f));
+            card.gameObject.AddComponent<PopIn>();
             Text text = CreateText(card.transform, "Text", 30, TextAnchor.MiddleCenter);
             Stretch(text.rectTransform);
             text.rectTransform.offsetMin = new Vector2(24f, 10f);
@@ -693,6 +727,14 @@ namespace Deskmates.Editor
             DemoScript script = AssetDatabase.LoadAssetAtPath<DemoScript>(DemoScriptPath);
             if (script != null)
             {
+                // Scripts made before the agents creature get its sessions once.
+                if (!script.events.Exists(e => e.sourceId == SourceIds.Agents))
+                {
+                    script.events.AddRange(AgentsDemoEvents());
+                    EditorUtility.SetDirty(script);
+                    AssetDatabase.SaveAssets();
+                }
+
                 return script;
             }
 
@@ -726,6 +768,7 @@ namespace Deskmates.Editor
                 DemoAdd(70f, SourceIds.Messages, "dm-lena", "Can you check my numbers before 11?", "Lena Ruiz", 0f),
                 DemoResolve(160f, SourceIds.Messages),
             });
+            script.events.AddRange(AgentsDemoEvents());
 
             Directory.CreateDirectory(Path.GetDirectoryName(DemoScriptPath));
             AssetDatabase.Refresh();
@@ -733,6 +776,30 @@ namespace Deskmates.Editor
             AssetDatabase.SaveAssets();
             Debug.Log($"[Deskmates] Created {DemoScriptPath}.");
             return script;
+        }
+
+        // Agents: coding sessions run, one asks for permission, one fails, one finishes; the user answers and looks
+        // at them, and the last one finishes calmly. Session names stand for project folders; no tool is named.
+        static DemoEvent[] AgentsDemoEvents() => new[]
+        {
+            DemoSession(5f, "refactor-auth", "Refactor the login flow", AgentStates.Running),
+            DemoSession(12f, "fix-flaky-tests", "Fix the flaky checkout tests", AgentStates.Running),
+            DemoSession(28f, "refactor-auth", "Asks to run the database migration", AgentStates.Waiting),
+            DemoSession(45f, "docs-site", "Update the API docs", AgentStates.Running),
+            DemoSession(60f, "fix-flaky-tests", "Two tests still time out", AgentStates.Failed),
+            DemoSession(85f, "docs-site", "12 pages updated", AgentStates.Done),
+            DemoSession(110f, "refactor-auth", "Migrating the sessions table", AgentStates.Running),
+            DemoResolve(125f, SourceIds.Agents, "fix-flaky-tests"),
+            DemoResolve(132f, SourceIds.Agents, "docs-site"),
+            DemoSession(150f, "refactor-auth", "Login flow refactored, all tests green", AgentStates.Done),
+            DemoResolve(170f, SourceIds.Agents, "refactor-auth"),
+        };
+
+        static DemoEvent DemoSession(float at, string session, string detail, string state)
+        {
+            DemoEvent demoEvent = DemoAdd(at, SourceIds.Agents, session, session, detail, 0f);
+            demoEvent.state = state;
+            return demoEvent;
         }
 
         static DemoEvent DemoAdd(float at, string sourceId, string itemId, string title, string detail, float minutesFromNow,

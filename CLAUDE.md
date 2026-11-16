@@ -48,6 +48,29 @@ Modèle d'entrée : titre et statut, date, objectif (renvoi au PRD), ce qui a é
 
 Découpage de la semaine 2 (PRD §11) : 2. créature vivante, 3. mode démo, 4. calibration du bureau et lâcher avec rebond, 5. regard et pincement (bulle d'aperçu).
 
+### 9. Créature Agents, en mode démo (PRD §4.2, §4.4, §4.6 et §7.2 bis) — Validée (hash dans le commit suivant)
+
+- **Date** : 16 novembre 2026.
+- **Objectif** : la cinquième créature, pour les développeurs : elle s'inquiète quand une session d'agent de code attend une réponse, échoue ou a fini sans être consultée. Ici en mode démo ; la connexion réelle (relais local et hooks) vient ensuite.
+- **Fait** :
+  - Modèle (`SourceArt/creatures_bureau/build_creatures.py`, `Agents.glb`) : casque de chantier jaune, lampe frontale (matériau `LampLens`), arceau de 5 billes (`Agents_Bead0` à `4`, un matériau chacune). Les quatre autres `.glb` sont inchangés. Rendus `rendu_agents.png` et `rendu_famille.png`.
+  - Données : `SourceIds.Agents`, `AgentStates` (running, waiting, done, failed), champ `State` optionnel sur `SourceItem` et sur les événements de démo. `AgentsStress` suit la formule du PRD §4.4.
+  - Scénario de démo : trois sessions inventées (`refactor-auth`, `fix-flaky-tests`, `docs-site`) ; l'une demande une autorisation, une échoue, une finit ; l'utilisateur répond et les consulte ; panique vers 1:00, soupir vers 2:12. Ajouté une fois aux scénarios existants par `ProjectSetup`.
+  - `AgentsLamp` : une bille par session dans l'ordre d'arrivée (grise en cours, bleue terminée, orange en attente, rouge en erreur), lampe qui pulse doucement tant qu'une session attend, deux clignements quand une session se termine.
+  - Bulle « 1 waiting for you · 1 failed », panneau trié (attente, erreur, terminée, en cours), pincer une ligne la marque « seen ».
+  - `Main` : cinq créatures, rangée resserrée à 12 cm pour tenir dans le cône central. L'onboarding présente aussi Agents.
+- **Vérifié** : 49 tests EditMode et 25 PlayMode passent. Le scénario d'Agents passe par les quatre états, soupire et finit calme ; noms d'outils de code ajoutés à la liste des marques interdites.
+- **Pas encore vérifié** : sur le casque (lisibilité des billes, éclat de la lampe), performances avec cinq créatures.
+- **Décisions à valider** :
+  - Environ 22 000 triangles par créature, 113 000 au total, au-dessus du budget prudent du PRD (50 000). On ne simplifie que si les fps le demandent.
+  - Jamais de nom d'outil dans l'app : « session », « waiting for you ».
+
+### 8. Finition de l'interface (STYLE.md) — Validée (hash dans le commit suivant)
+
+- **Date** : 16 novembre 2026.
+- **Fait** : `PopIn` fait apparaître la bulle, le panneau et la carte d'onboarding avec un petit rebond. La bulle a une pointe vers sa créature. Le panneau porte en haut une pastille à la couleur de la créature (`CreatureInfo.Accent`, réglée par `ProjectSetup` : bleu casquette, bleu-gris, lilas, sauge, jaune casque).
+- **Vérifié** : tests ci-dessus. Pas encore vu sur le casque.
+
 ### 7. Onboarding du premier lancement (PRD §6.1, S4) — Validée (`5714c6e`)
 
 - **Date** : 16 novembre 2026.

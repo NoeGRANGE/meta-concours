@@ -77,7 +77,8 @@ namespace Deskmates.Data.Demo
             {
                 case DemoEventKind.AddItem:
                     DateTime time = ClockAt(demoEvent.atSecond).AddMinutes(demoEvent.minutesFromNow);
-                    source.Add(new SourceItem(demoEvent.itemId, demoEvent.title, demoEvent.detail, time, demoEvent.important));
+                    source.Add(new SourceItem(demoEvent.itemId, demoEvent.title, demoEvent.detail, time, demoEvent.important,
+                        string.IsNullOrEmpty(demoEvent.state) ? null : demoEvent.state));
                     break;
                 case DemoEventKind.Resolve when script.autoResolve:
                     if (string.IsNullOrEmpty(demoEvent.itemId))

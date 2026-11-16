@@ -25,6 +25,7 @@ MonoBehaviour:
     title: Lunch menu for the week
     detail: Office team
     important: 0
+    state: 
     minutesFromNow: -30
   - atSecond: 8
     sourceId: mail
@@ -33,6 +34,7 @@ MonoBehaviour:
     title: Contract draft for your review
     detail: Maya Lindqvist
     important: 1
+    state: 
     minutesFromNow: -2
   - atSecond: 25
     sourceId: mail
@@ -41,6 +43,7 @@ MonoBehaviour:
     title: Client call moved to 3 pm
     detail: "Tom\xE1s Rivera"
     important: 1
+    state: 
     minutesFromNow: -1
   - atSecond: 45
     sourceId: mail
@@ -49,6 +52,7 @@ MonoBehaviour:
     title: Budget figures needed today
     detail: Priya Nair
     important: 1
+    state: 
     minutesFromNow: -1
   - atSecond: 62
     sourceId: mail
@@ -57,6 +61,7 @@ MonoBehaviour:
     title: 'Re: Contract draft, any update?'
     detail: Maya Lindqvist
     important: 1
+    state: 
     minutesFromNow: 0
   - atSecond: 80
     sourceId: mail
@@ -65,6 +70,7 @@ MonoBehaviour:
     title: Invoice 2291 is overdue
     detail: Accounts team
     important: 1
+    state: 
     minutesFromNow: 0
   - atSecond: 115
     sourceId: mail
@@ -73,6 +79,7 @@ MonoBehaviour:
     title: 
     detail: 
     important: 0
+    state: 
     minutesFromNow: 0
   - atSecond: 0
     sourceId: calendar
@@ -81,6 +88,7 @@ MonoBehaviour:
     title: Design review
     detail: with Jonah Park
     important: 0
+    state: 
     minutesFromNow: 70
   - atSecond: 0
     sourceId: calendar
@@ -89,6 +97,7 @@ MonoBehaviour:
     title: Weekly planning
     detail: with the product team
     important: 0
+    state: 
     minutesFromNow: 190
   - atSecond: 0
     sourceId: tasks
@@ -97,6 +106,7 @@ MonoBehaviour:
     title: Send the slide deck to Priya
     detail: Work
     important: 0
+    state: 
     minutesFromNow: 45
   - atSecond: 0
     sourceId: tasks
@@ -105,6 +115,7 @@ MonoBehaviour:
     title: Review the onboarding copy
     detail: Work
     important: 0
+    state: 
     minutesFromNow: 100
   - atSecond: 0
     sourceId: tasks
@@ -113,6 +124,7 @@ MonoBehaviour:
     title: Book the team offsite venue
     detail: Work
     important: 0
+    state: 
     minutesFromNow: 1440
   - atSecond: 50
     sourceId: tasks
@@ -121,6 +133,7 @@ MonoBehaviour:
     title: Update the quarterly report
     detail: Work
     important: 0
+    state: 
     minutesFromNow: 30
   - atSecond: 150
     sourceId: tasks
@@ -129,6 +142,7 @@ MonoBehaviour:
     title: 
     detail: 
     important: 0
+    state: 
     minutesFromNow: 0
   - atSecond: 152
     sourceId: tasks
@@ -137,6 +151,7 @@ MonoBehaviour:
     title: 
     detail: 
     important: 0
+    state: 
     minutesFromNow: 0
   - atSecond: 154
     sourceId: tasks
@@ -145,6 +160,7 @@ MonoBehaviour:
     title: 
     detail: 
     important: 0
+    state: 
     minutesFromNow: 0
   - atSecond: 30
     sourceId: messages
@@ -153,6 +169,7 @@ MonoBehaviour:
     title: Got a minute to talk about the demo?
     detail: Sam Okafor
     important: 0
+    state: 
     minutesFromNow: 0
   - atSecond: 70
     sourceId: messages
@@ -161,6 +178,7 @@ MonoBehaviour:
     title: Can you check my numbers before 11?
     detail: Lena Ruiz
     important: 0
+    state: 
     minutesFromNow: 0
   - atSecond: 160
     sourceId: messages
@@ -169,4 +187,104 @@ MonoBehaviour:
     title: 
     detail: 
     important: 0
+    state: 
+    minutesFromNow: 0
+  - atSecond: 5
+    sourceId: agents
+    kind: 0
+    itemId: refactor-auth
+    title: refactor-auth
+    detail: Refactor the login flow
+    important: 0
+    state: running
+    minutesFromNow: 0
+  - atSecond: 12
+    sourceId: agents
+    kind: 0
+    itemId: fix-flaky-tests
+    title: fix-flaky-tests
+    detail: Fix the flaky checkout tests
+    important: 0
+    state: running
+    minutesFromNow: 0
+  - atSecond: 28
+    sourceId: agents
+    kind: 0
+    itemId: refactor-auth
+    title: refactor-auth
+    detail: Asks to run the database migration
+    important: 0
+    state: waiting
+    minutesFromNow: 0
+  - atSecond: 45
+    sourceId: agents
+    kind: 0
+    itemId: docs-site
+    title: docs-site
+    detail: Update the API docs
+    important: 0
+    state: running
+    minutesFromNow: 0
+  - atSecond: 60
+    sourceId: agents
+    kind: 0
+    itemId: fix-flaky-tests
+    title: fix-flaky-tests
+    detail: Two tests still time out
+    important: 0
+    state: failed
+    minutesFromNow: 0
+  - atSecond: 85
+    sourceId: agents
+    kind: 0
+    itemId: docs-site
+    title: docs-site
+    detail: 12 pages updated
+    important: 0
+    state: done
+    minutesFromNow: 0
+  - atSecond: 110
+    sourceId: agents
+    kind: 0
+    itemId: refactor-auth
+    title: refactor-auth
+    detail: Migrating the sessions table
+    important: 0
+    state: running
+    minutesFromNow: 0
+  - atSecond: 125
+    sourceId: agents
+    kind: 1
+    itemId: fix-flaky-tests
+    title: 
+    detail: 
+    important: 0
+    state: 
+    minutesFromNow: 0
+  - atSecond: 132
+    sourceId: agents
+    kind: 1
+    itemId: docs-site
+    title: 
+    detail: 
+    important: 0
+    state: 
+    minutesFromNow: 0
+  - atSecond: 150
+    sourceId: agents
+    kind: 0
+    itemId: refactor-auth
+    title: refactor-auth
+    detail: Login flow refactored, all tests green
+    important: 0
+    state: done
+    minutesFromNow: 0
+  - atSecond: 170
+    sourceId: agents
+    kind: 1
+    itemId: refactor-auth
+    title: 
+    detail: 
+    important: 0
+    state: 
     minutesFromNow: 0

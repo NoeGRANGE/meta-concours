@@ -24,13 +24,14 @@ namespace Deskmates.Tests
             { SourceIds.Calendar, "Assets/_Project/Settings/Stress/Stress_Calendar.asset" },
             { SourceIds.Tasks, "Assets/_Project/Settings/Stress/Stress_Tasks.asset" },
             { SourceIds.Messages, "Assets/_Project/Settings/Stress/Stress_Messages.asset" },
+            { SourceIds.Agents, "Assets/_Project/Settings/Stress/Stress_Agents.asset" },
         };
 
         // Words that would put a brand in the app (PRD 2.1, rule 5).
         static readonly string[] Brands =
         {
             "gmail", "google", "outlook", "microsoft", "teams", "slack", "zoom", "notion", "jira", "todoist",
-            "linear", "github", "apple", "meta",
+            "linear", "github", "apple", "meta", "claude", "anthropic", "codex", "openai", "copilot", "cursor",
         };
 
         [Test]

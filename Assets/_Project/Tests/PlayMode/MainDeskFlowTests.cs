@@ -61,7 +61,7 @@ namespace Deskmates.Tests
             yield return null;
 
             AppBootstrap app = Object.FindAnyObjectByType<AppBootstrap>();
-            Assert.AreEqual(4, app.Creatures.Count, "The whole family is on the table.");
+            Assert.AreEqual(5, app.Creatures.Count, "The whole family is on the table.");
             Creature mail = app.MailCreature;
             Assert.IsNotNull(mail, "Before calibration the creature waits on the scanned table.");
 

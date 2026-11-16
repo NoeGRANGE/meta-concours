@@ -165,7 +165,7 @@ namespace Deskmates.UI
                         Go(Step.Done);
                     }
 
-                    return "Meet your Fretlings!\n<size=22>Calendar, Tasks and Messages worry for you too</size>";
+                    return "Meet your Fretlings!\n<size=22>Calendar, Tasks, Messages and Agents worry for you too</size>";
                 default:
                     return desk.IsCalibrating ? CalibratePrompt : null;
             }

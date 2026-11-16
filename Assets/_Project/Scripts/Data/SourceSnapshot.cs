@@ -8,13 +8,14 @@ namespace Deskmates.Data
     /// </summary>
     public sealed class SourceItem
     {
-        public SourceItem(string id, string title, string detail, DateTime time, bool important = false)
+        public SourceItem(string id, string title, string detail, DateTime time, bool important = false, string state = null)
         {
             Id = id;
             Title = title;
             Detail = detail;
             Time = time;
             Important = important;
+            State = state;
         }
 
         public string Id { get; }
@@ -30,6 +31,9 @@ namespace Deskmates.Data
 
         /// <summary>For mail: flagged important or from a priority contact (PRD 4.4).</summary>
         public bool Important { get; }
+
+        /// <summary>For agent sessions: one of <see cref="AgentStates"/>, entered at <see cref="Time"/>. Null elsewhere.</summary>
+        public string State { get; }
     }
 
     /// <summary>

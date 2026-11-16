@@ -16,6 +16,9 @@ namespace Deskmates.UI
         [SerializeField] Canvas canvas;
         [SerializeField] Text title;
         [SerializeField] Text hint;
+
+        [Tooltip("Small pill at the top of the panel, in the colour of the creature it belongs to.")]
+        [SerializeField] Image accent;
         [SerializeField] PanelRow[] rows;
 
         [Tooltip("Seconds without looking at the panel or its creature before the panel closes.")]
@@ -56,6 +59,11 @@ namespace Deskmates.UI
         {
             Creature = creature;
             lookedAwayFor = 0f;
+            if (accent != null)
+            {
+                accent.color = creature.Accent;
+            }
+
             canvas.gameObject.SetActive(true);
             Refresh();
         }
@@ -117,10 +125,10 @@ namespace Deskmates.UI
                 rows[i].Show(i < shown.Count ? ItemText.Row(Creature.SourceId, shown[i], now) : null);
             }
 
+            string verb = ItemText.ActionVerb(Creature.SourceId);
             hint.text = shown.Count == 0 ? "All clear!"
-                : ItemText.Action(Creature.SourceId) == ItemAction.MarkDone ? "Pinch a line to mark it done · pinch me to close"
-                : ItemText.Action(Creature.SourceId) == null ? "Pinch me to close"
-                : "Pinch a line to mark it read · pinch me to close";
+                : verb == null ? "Pinch me to close"
+                : $"Pinch a line to mark it {verb} · pinch me to close";
         }
 
         bool TryGetSource(out IDataSource source)

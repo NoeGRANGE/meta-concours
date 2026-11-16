@@ -41,6 +41,21 @@ namespace Deskmates.Tests
             Assert.AreEqual(ItemAction.MarkRead, ItemText.Action(SourceIds.Mail));
         }
 
+        [Test]
+        public void AgentSessionsNeedingTheUserComeFirst()
+        {
+            SourceSnapshot sessions = Snapshot(Session("running", -9, AgentStates.Running), Session("done", -3, AgentStates.Done),
+                Session("waiting", -2, AgentStates.Waiting), Session("failed", -1, AgentStates.Failed));
+            Assert.AreEqual("1 waiting for you · 1 failed · 1 done", ItemText.Summary(SourceIds.Agents, sessions, Now));
+            var top = ItemText.Top(SourceIds.Agents, sessions, Now);
+            Assert.AreEqual(new[] { "waiting", "failed", "done" }, new[] { top[0].Id, top[1].Id, top[2].Id });
+            Assert.AreEqual("1 session running", ItemText.Summary(SourceIds.Agents, Snapshot(Session("r", 0, AgentStates.Running)), Now));
+            Assert.AreEqual("seen", ItemText.ActionVerb(SourceIds.Agents));
+        }
+
+        static SourceItem Session(string id, float minutesFromNow, string state) =>
+            new SourceItem(id, id, "Detail", Now.AddMinutes(minutesFromNow), false, state);
+
         static SourceSnapshot Snapshot(params SourceItem[] items) => new SourceSnapshot("test", items);
 
         static SourceItem Item(string id, float minutesFromNow, bool important = false) =>

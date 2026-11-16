@@ -14,7 +14,7 @@ namespace Deskmates.Core
 
         // Default row of creatures on the calibrated desk: spacing between them, how far behind the hand they sit,
         // and the distance they keep from the zone edges, in metres.
-        public const float RowSpacing = 0.14f;
+        public const float RowSpacing = 0.12f;
         const float RowDepth = 0.1f;
         const float RowMargin = 0.06f;
 

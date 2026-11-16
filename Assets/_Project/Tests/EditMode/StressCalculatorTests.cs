@@ -65,6 +65,24 @@ namespace Deskmates.Tests
                 "Twenty minutes of waiting add 0.3.");
         }
 
+        [Test]
+        public void AgentsWeighWaitingThenFailedThenFinishedAndIgnoreRunning()
+        {
+            AgentsStress agents = ScriptableObject.CreateInstance<AgentsStress>();
+            Assert.AreEqual(0f, agents.Evaluate(Snapshot(Session(0f, AgentStates.Running)), Now), 1e-4,
+                "A running session is calm.");
+            Assert.AreEqual(0.4f, agents.Evaluate(Snapshot(Session(0f, AgentStates.Waiting)), Now), 1e-4);
+            Assert.AreEqual(0.4f + 0.1f + 0.3f + 0.15f,
+                agents.Evaluate(Snapshot(Session(-5f, AgentStates.Waiting), Session(-1f, AgentStates.Failed),
+                    Session(-2f, AgentStates.Done)), Now), 1e-4,
+                "Five minutes of waiting add 0.1; a failure 0.3; a finished session not looked at 0.15.");
+        }
+
+        static SourceItem Session(float minutesFromNow, string state)
+        {
+            return new SourceItem($"session-{next++}", "session", "Detail", Now.AddMinutes(minutesFromNow), false, state);
+        }
+
         static SourceSnapshot Snapshot(params SourceItem[] items) => new SourceSnapshot("test", items);
 
         static int next;

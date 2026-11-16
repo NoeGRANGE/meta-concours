@@ -71,7 +71,7 @@ namespace Deskmates.Tests
             Onboarding onboarding = Object.FindAnyObjectByType<Onboarding>();
             Text card = onboarding.GetComponentInChildren<Text>(true);
             Assert.IsTrue(onboarding.IsRunning);
-            Assert.AreEqual(4, app.Creatures.Count);
+            Assert.AreEqual(5, app.Creatures.Count);
             foreach (Creature creature in app.Creatures)
             {
                 Assert.IsFalse(creature.gameObject.activeSelf, "No creature before the desk is known.");

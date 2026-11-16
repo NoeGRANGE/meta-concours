@@ -26,6 +26,21 @@ namespace Deskmates.UI
                     int overdue = items.Count(i => i.Time < now);
                     int today = items.Count(i => i.Time >= now && i.Time.Date == now.Date);
                     return overdue + today == 0 ? "All clear for today" : $"{overdue} overdue · {today} due today";
+                case SourceIds.Agents:
+                    int waiting = items.Count(i => i.State == AgentStates.Waiting);
+                    int failed = items.Count(i => i.State == AgentStates.Failed);
+                    int done = items.Count(i => i.State == AgentStates.Done);
+                    int running = items.Count(i => i.State == AgentStates.Running);
+                    if (waiting + failed + done == 0)
+                    {
+                        return running == 0 ? "No sessions" : $"{Count(running, "session")} running";
+                    }
+
+                    List<string> parts = new();
+                    if (waiting > 0) parts.Add($"{waiting} waiting for you");
+                    if (failed > 0) parts.Add($"{failed} failed");
+                    if (done > 0) parts.Add($"{done} done");
+                    return string.Join(" · ", parts);
                 default:
                     return items.Count == 0
                         ? "No one is waiting"
@@ -40,6 +55,7 @@ namespace Deskmates.UI
             {
                 SourceIds.Mail => snapshot.Items.OrderByDescending(i => i.Important).ThenBy(i => i.Time),
                 SourceIds.Calendar => Upcoming(snapshot.Items, now),
+                SourceIds.Agents => snapshot.Items.OrderBy(i => AgentPriority(i.State)).ThenBy(i => i.Time),
                 _ => snapshot.Items.OrderBy(i => i.Time),
             };
             return items.Take(count).ToList();
@@ -54,6 +70,7 @@ namespace Deskmates.UI
                 SourceIds.Tasks => item.Time < now
                     ? $"{item.Title}\n<size=18>overdue by {Age(now - item.Time)}</size>"
                     : $"{item.Title}\n<size=18>due in {Age(item.Time - now)}</size>",
+                SourceIds.Agents => $"{item.Title}\n<size=18>{AgentLabel(item.State)} · {item.Detail} · {Age(now - item.Time)}</size>",
                 _ => $"{item.Title}\n<size=18>{item.Detail} · {Age(now - item.Time)} ago</size>",
             };
         }
@@ -64,6 +81,32 @@ namespace Deskmates.UI
             SourceIds.Calendar => null,
             SourceIds.Tasks => ItemAction.MarkDone,
             _ => ItemAction.MarkRead,
+        };
+
+        /// <summary>The verb of a row's action in the panel hint ("read", "done", "seen"), or null when read-only.</summary>
+        public static string ActionVerb(string sourceId) => sourceId switch
+        {
+            SourceIds.Calendar => null,
+            SourceIds.Tasks => "done",
+            SourceIds.Agents => "seen",
+            _ => "read",
+        };
+
+        // Sessions that need the user first, then failures, finished ones, and running ones last.
+        static int AgentPriority(string state) => state switch
+        {
+            AgentStates.Waiting => 0,
+            AgentStates.Failed => 1,
+            AgentStates.Done => 2,
+            _ => 3,
+        };
+
+        static string AgentLabel(string state) => state switch
+        {
+            AgentStates.Waiting => "waiting for you",
+            AgentStates.Failed => "failed",
+            AgentStates.Done => "done",
+            _ => "running",
         };
 
         public static string Age(TimeSpan span)
