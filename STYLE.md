@@ -15,6 +15,13 @@
 
 Écartés : *Deskmates* (terrain encombré, dont un projet « Deskmate » au concept proche), *FretPets* (évoque l'animal virtuel dont on prend soin, et un ton enfantin), *Worrybuds* (trop proche de l'app *WorryBugs*).
 
+## 1 bis. Logo et icône (choisis le 17 novembre)
+
+- **Logo** : le Facteur (rendu 3D détouré) dans une pastille pêche `#F2D3AE`, puis « Fretlings » en **Fredoka** demi-gras, avec une petite flamme orange-rouge à la place du point du « i ». Encre cacao sur fond clair, crème sur fond sombre. Fichiers : `SourceArt/brand/logo/` (régénérés par `build_logo.py`).
+- **Icône de l'app** : le Facteur qui dépasse du bas d'un carré crème dégradé, avec la flamme près de sa casquette (`fretlings_icon_1024.png`, carré plein, sans coins arrondis).
+- **Rendus détourés** des cinq créatures, au calme et en panique, et de la famille : `SourceArt/brand/stickers/` (script `render_stickers.py`, Blender, Cycles). À réutiliser pour la vidéo, la couverture et Devpost.
+- **Typo** : Fredoka (SIL OFL) pour le logo et les titres ; Lato pour les textes.
+
 ## 2. Personnalité
 
 - Les créatures paniquent **pour** l'utilisateur ; lui reste calme. L'humour vient de ce décalage, jamais d'une moquerie.
