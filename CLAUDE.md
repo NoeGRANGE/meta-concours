@@ -48,7 +48,7 @@ Modèle d'entrée : titre et statut, date, objectif (renvoi au PRD), ce qui a é
 
 Découpage de la semaine 2 (PRD §11) : 2. créature vivante, 3. mode démo, 4. calibration du bureau et lâcher avec rebond, 5. regard et pincement (bulle d'aperçu).
 
-### 5. Regarder et pincer : bulle d'aperçu et panneau de détail (PRD §5, S2) — En revue
+### 5. Regarder et pincer : bulle d’aperçu et panneau de détail (PRD §5, S2) — Validée (`a0d5783`)
 
 - **Date** : 12 novembre 2026.
 - **Objectif** : regarder une créature affiche un aperçu ; pincer en la regardant ouvre ses éléments les plus urgents ; regarder une ligne et pincer la marque lue ou faite. C'est l'action de l'utilisateur qui fait retomber le stress et déclenche le soupir.

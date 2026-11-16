@@ -33,7 +33,7 @@ namespace Deskmates.Editor
     /// </summary>
     public static class ProjectSetup
     {
-        const string AndroidPackageName = "com.deskmates.app";
+        const string AndroidPackageName = "com.fretlings.app";
         const string ModelsFolder = "Assets/_Project/Art/Models";
         const string CreaturePrefabsFolder = "Assets/_Project/Prefabs/Creatures";
         const string CreatureConfigsFolder = "Assets/_Project/Settings/Creatures";
@@ -311,6 +311,7 @@ namespace Deskmates.Editor
         static async Task ConfigureProjectAsync()
         {
             PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, AndroidPackageName);
+            PlayerSettings.productName = "Fretlings";
 
             // Hands-first is an elimination criterion of the competition (PRD 2.1): never require controllers.
             OVRProjectConfig config = OVRProjectConfig.CachedProjectConfig;

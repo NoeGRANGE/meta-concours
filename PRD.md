@@ -1,4 +1,4 @@
-# PRD — Deskmates (nom de travail)
+# PRD — Fretlings (nom de travail : Deskmates)
 
 > Document de référence du projet, à la racine du repo. Il décrit **quoi** construire, **pourquoi**, et **dans quelles limites**.
 > Agent : lis ce fichier en entier avant toute tâche. En cas de doute entre deux options, choisis celle qui sert le mieux la section « Critères de jugement ».
