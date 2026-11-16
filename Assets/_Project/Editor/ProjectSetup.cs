@@ -275,6 +275,12 @@ namespace Deskmates.Editor
                     }
                 });
 
+                // First-run walkthrough and hand prompt (PRD 6.1), on a card in front of the user.
+                if (Object.FindAnyObjectByType<Onboarding>(FindObjectsInactive.Include) == null)
+                {
+                    CreateOnboarding(app, session, head);
+                }
+
                 // Look and pinch (PRD 5): the gaze selector and the shared detail panel.
                 GazeSelector gaze = Object.FindAnyObjectByType<GazeSelector>();
                 if (gaze == null)
@@ -527,6 +533,23 @@ namespace Deskmates.Editor
                     property.GetArrayElementAtIndex(i).objectReferenceValue = rows[i];
                 }
             });
+        }
+
+        static void CreateOnboarding(AppBootstrap app, DeskSession session, Transform head)
+        {
+            Onboarding onboarding = new GameObject("Onboarding").AddComponent<Onboarding>();
+            Canvas card = CreateWorldCanvas("Card", onboarding.transform, new Vector2(620f, 130f));
+            Text text = CreateText(card.transform, "Text", 30, TextAnchor.MiddleCenter);
+            Stretch(text.rectTransform);
+            text.rectTransform.offsetMin = new Vector2(24f, 10f);
+            text.rectTransform.offsetMax = new Vector2(-24f, -10f);
+            text.lineSpacing = 1.1f;
+            card.gameObject.SetActive(false);
+            SetSerialized(onboarding, "app", property => property.objectReferenceValue = app);
+            SetSerialized(onboarding, "desk", property => property.objectReferenceValue = session);
+            SetSerialized(onboarding, "head", property => property.objectReferenceValue = head);
+            SetSerialized(onboarding, "card", property => property.objectReferenceValue = card);
+            SetSerialized(onboarding, "cardText", property => property.objectReferenceValue = text);
         }
 
         // 0.6 mm per canvas unit: a 28-unit line is about 1.7 cm tall, over 0.9 degrees at arm's length (PRD 5).

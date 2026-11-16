@@ -39,6 +39,38 @@ namespace Deskmates.Core
 
         public Creature MailCreature => creatures.Count > 0 ? creatures[0] : null;
 
+        /// <summary>How many creatures are shown, in family order. The onboarding introduces them one step at a time.</summary>
+        public int Revealed { get; private set; } = int.MaxValue;
+
+        /// <summary>Hides every creature until <see cref="Reveal"/> is called.</summary>
+        public void HideAll()
+        {
+            Revealed = 0;
+            ApplyVisibility();
+        }
+
+        /// <summary>Shows the first <paramref name="count"/> creatures; newly shown ones drop onto the desk.</summary>
+        public void Reveal(int count)
+        {
+            int before = Revealed;
+            Revealed = count;
+            SpawnAll();
+            ApplyVisibility();
+            for (int i = before; i < Mathf.Min(count, creatures.Count); i++)
+            {
+                creatures[i].transform.position += Vector3.up * FirstDropHeight;
+                creatures[i].GetComponent<GrabAndDrop>().DropFromHere();
+            }
+        }
+
+        void ApplyVisibility()
+        {
+            for (int i = 0; i < creatures.Count; i++)
+            {
+                creatures[i].gameObject.SetActive(i < Revealed);
+            }
+        }
+
         async void Start()
         {
             desk.DeskChanged += OnDeskChanged;
@@ -135,6 +167,8 @@ namespace Deskmates.Core
             {
                 creatures.Add(Instantiate(prefab));
             }
+
+            ApplyVisibility();
         }
 
         Pose HeadPose() => new Pose(head.position, head.rotation);

@@ -48,6 +48,28 @@ Modèle d'entrée : titre et statut, date, objectif (renvoi au PRD), ce qui a é
 
 Découpage de la semaine 2 (PRD §11) : 2. créature vivante, 3. mode démo, 4. calibration du bureau et lâcher avec rebond, 5. regard et pincement (bulle d'aperçu).
 
+### 7. Onboarding du premier lancement (PRD §6.1, S4) — Validée (hash dans le commit suivant)
+
+- **Date** : 16 novembre 2026.
+- **Objectif** : un premier lancement clair en moins de 60 s, sans mur de texte : poser la main, rencontrer le Facteur, le regarder, le pincer, le calmer, puis découvrir la famille.
+- **Fait** :
+  - `Onboarding` (dans `Scripts/UI/`) : une carte crème flottant 60 cm devant l'utilisateur, 12 cm sous les yeux, qui suit doucement la tête. Étapes :
+    1. Aucune créature, démo en pause : « Place your hand flat on your desk ».
+    2. Bureau calibré : le Facteur tombe seul, la démo démarre : « This is your Mail Fretling ».
+    3. « Keep working », jusqu'à ce qu'il soit stressé ; puis « It's worried! Look at it, then pinch ».
+    4. Panneau ouvert : « Pinch each line to mark it read ».
+    5. Premier soupir (action de l'utilisateur ou *Auto Resolve*) : les trois autres tombent sur le bureau, « Meet your Fretlings! », la carte disparaît après 6 s.
+  - Aux lancements suivants, pas de tutoriel (`PlayerPrefs`). La carte de la main réapparaît dès qu'une calibration attend.
+  - `AppBootstrap` : `HideAll` et `Reveal(n)` ; une créature révélée tombe de 20 cm sur le bureau.
+  - `ProjectSetup` crée l'objet « Onboarding » et sa carte dans `Main`. Les tests PlayMode sautent le tutoriel par défaut (`Onboarding.DoneOverride`).
+- **Fichiers** : `Scripts/UI/Onboarding.cs`, `Scripts/Core/AppBootstrap.cs`, `Editor/ProjectSetup.cs`, `Tests/PlayMode/OnboardingTests.cs`. Généré : `Scenes/Main.unity`.
+- **Vérifié** : 46 tests EditMode et 24 PlayMode passent. Le nouveau test joue le parcours dans `Main` : rien avant le bureau, démo en pause ; le Facteur seul ensuite ; toute la famille après son soupir.
+- **Pas encore vérifié** : sur le casque (lisibilité et place de la carte, durée réelle du parcours).
+- **Décisions à valider** :
+  - Pas encore d'œuf qui éclot ni de main fantôme animée (PRD §6.1) : texte seul, à ajouter s'il reste du temps.
+  - Pas d'étape « Connect your Google account » : la connexion Google n'existe pas.
+  - Pour revoir le tutoriel sur le casque, il faut désinstaller l'app.
+
 ### 6. Toute la famille dans `Main` (PRD §4.2 et §7.1) — Validée (`650c3ec`)
 
 - **Date** : 16 novembre 2026.
