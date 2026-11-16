@@ -63,9 +63,22 @@ namespace Deskmates.Tests
             Creature mail = Object.FindAnyObjectByType<AppBootstrap>().MailCreature;
             Assert.IsNotNull(mail, "Before calibration the creature waits on the scanned table.");
 
-            desk.Calibration.Complete(DeskCalibration.MeasurementAt(mail.transform.position));
+            // Released above the table before any calibration, it falls back onto the table.
             GrabAndDrop grab = mail.GetComponent<GrabAndDrop>();
+            float tableHeight = mail.transform.position.y;
+            mail.transform.position += Vector3.up * 0.2f;
+            grab.DropFromHere();
+            Assert.IsTrue(grab.IsFalling, "Without a desk, a released creature still falls onto the scanned table.");
             float limit = Time.time + 5f;
+            while (Time.time < limit && grab.IsFalling)
+            {
+                yield return null;
+            }
+
+            Assert.AreEqual(tableHeight, mail.transform.position.y, 1e-3, "It rests on the table.");
+
+            desk.Calibration.Complete(DeskCalibration.MeasurementAt(mail.transform.position));
+            limit = Time.time + 5f;
             while (Time.time < limit && (mail.transform.parent != desk.Root || grab.IsFalling))
             {
                 yield return null;

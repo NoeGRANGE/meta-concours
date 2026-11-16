@@ -1,6 +1,6 @@
 # Deskmates — instructions pour Claude
 
-Lis `PRD.md` en entier avant toute tâche. En cas de doute entre deux options, choisis celle qui sert le mieux les critères de jugement (PRD §2.3).
+Lis `PRD.md` en entier avant toute tâche, et `STYLE.md` avant tout travail visuel (interface, icône, vidéo, textes de soumission). En cas de doute entre deux options, choisis celle qui sert le mieux les critères de jugement (PRD §2.3).
 
 ## Règles de travail
 
@@ -48,7 +48,42 @@ Modèle d'entrée : titre et statut, date, objectif (renvoi au PRD), ce qui a é
 
 Découpage de la semaine 2 (PRD §11) : 2. créature vivante, 3. mode démo, 4. calibration du bureau et lâcher avec rebond, 5. regard et pincement (bulle d'aperçu).
 
-### 4. Bureau : calibration à la main, mémoire et lâcher avec rebond (PRD §5.1 et §5.2, S2) — En revue
+### 5. Regarder et pincer : bulle d'aperçu et panneau de détail (PRD §5, S2) — En revue
+
+- **Date** : 12 novembre 2026.
+- **Objectif** : regarder une créature affiche un aperçu ; pincer en la regardant ouvre ses éléments les plus urgents ; regarder une ligne et pincer la marque lue ou faite. C'est l'action de l'utilisateur qui fait retomber le stress et déclenche le soupir.
+- **Fait** :
+  - `GazeSelector` : regard par la direction de la tête (Quest 3 et 3S n'ont pas de suivi des yeux, c'est le repli prévu par le PRD), fixation de 0,4 s, puis pincement pouce-index de l'une ou l'autre main via l'Interaction SDK. En éditeur, la touche P remplace le pincement (onglet Game actif).
+  - `CreatureInfo` sur chaque prefab : bulle d'aperçu au-dessus de la créature, par exemple « 3 important emails · oldest 2 h ».
+  - `DetailPanel`, un seul dans `Main` : titre, trois lignes et une aide. Il suit la créature, se tourne vers l'utilisateur et se ferme après 3 s de regard ailleurs. Pincer une ligne marque l'élément lu (mails, messages) ou fait (tâches). Les réunions sont en lecture seule.
+  - `ItemText` : les textes en anglais et l'ordre des éléments (importants puis plus anciens ; prochaine réunion ; tâches les plus en retard).
+  - Saisie à distance retirée des prefabs : pincer à distance sélectionne, saisir se fait main près de la créature (PRD §5 mis à jour).
+- **Fichiers** : `Scripts/Interaction/GazeSelector.cs`, `Scripts/UI/` (nouveau), `Scripts/Desk/IsdkHandSampler.cs` (pincement), `Editor/ProjectSetup.cs`, `PRD.md`, tests `EditMode/ItemTextTests.cs` et `PlayMode/LookAndPinchTests.cs`. Générés : les 4 prefabs (bulle), `Scenes/Main.unity` (regard, panneau).
+- **Vérifié** : 46 tests EditMode et 23 PlayMode passent. Le nouveau test PlayMode, dans `Main` : le Facteur panique, le regarder affiche la bulle, pincer ouvre le panneau avec 3 mails, tout marquer lu vide la boîte et il soupire une fois.
+- **Pas encore vérifié** : à l'œil dans le simulateur (lisibilité, taille, position du panneau) ; le pincement avec de vraies mains.
+- **Retouche du 15 novembre**, après le premier essai sur Quest 3S. Le regard ne réagissait pas, le pincement non plus, la calibration ne se déclenchait jamais, et une créature lâchée restait en l'air, faute de bureau.
+  - Cause probable : le rig de Meta a deux composants `Hand` par côté (mains suivies et mains pilotées par les manettes), et `IsdkHandSampler` gardait le premier trouvé. Il prend maintenant, à chaque image, celui dont le suivi est valide.
+  - Regard : si le rayon précis (3 cm) ne touche rien, un second rayon plus large (10 cm) est essayé, car la tête vise moins bas que les yeux.
+  - Pendant une calibration, une ligne `[Deskmates] Calibrating…` toutes les 2 s dit ce que l'app voit des mains (lisible avec `adb logcat -s Unity`).
+  - Limite de sécurité (Guardian) : en sortir effaçait les créatures. Comme le passthrough est toujours actif, l'app demande à la masquer (`shouldBoundaryVisibilityBeSuppressed` sur l'`OVRManager`, et le support *Boundary Visibility* dans la configuration Meta, aussi réglés par `ProjectSetup`).
+  - Vérifié sur le casque par l'utilisateur le 16 novembre : calibration, regard, pincement et chute fonctionnent.
+- **Retouche du 16 novembre** (panneau et style), après l'essai sur casque :
+  - Fermeture : pincer la créature une seconde fois referme son panneau. Sinon, il reste ouvert tant que l'utilisateur regarde la créature ou le panneau, et se ferme après 5 s de regard ailleurs. L'aide le dit : « Pinch a line to mark it read · pinch me to close ».
+  - Style : cartes crème arrondies, texte cacao en Lato (SIL OFL, copiée des exemples URP, notée dans `CREDITS.md`), lignes couleur crème qui passent en pêche au regard. Le sprite arrondi est généré par `ProjectSetup` (`Art/UI/Rounded.png`). La bulle et le panneau sont reconstruits à chaque génération.
+  - Nouveau `STYLE.md` : charte visuelle (couleurs, typo, interface, icône, couverture, vidéo, ton).
+  - Nom de l'app : **Fretlings** (choisi par l'utilisateur). Titre du PRD et `STYLE.md` mis à jour. `ProjectSetup` règle le nom affiché et le nouvel identifiant Android `com.fretlings.app` ; ils sont aussi dans les réglages du projet et dans le profil de build Meta Quest, qui a ses propres réglages. Le code garde l'espace de noms `Deskmates`.
+  - Chute : une créature lâchée avant toute calibration restait en l'air. Elle retombe maintenant sur la table du scan (repli du PRD §5.1, `DeskSession.FallbackPlane`, zone de 50 × 30 cm autour de son emplacement). Test ajouté dans `MainDeskFlowTests`.
+  - Constat sur casque : aucun `desks.json` n'a été écrit, donc le bureau n'est pas retrouvé au lancement suivant. Cause à lire dans les logs à la prochaine calibration (« Desk anchored » ou un avertissement d'ancre).
+  - Vérifié : 46 tests EditMode et 23 PlayMode passent.
+  - Vu sur le casque le 16 novembre : style jugé meilleur par l'utilisateur.
+- **Décisions à valider** :
+  - Regard par la tête partout, y compris sur les lunettes, tant qu'on n'a pas pu tester leurs yeux.
+  - Plus de saisie à distance.
+  - *Auto Resolve* reste activé : sans action du juré, la démo se calme quand même ; ses actions la calment plus tôt.
+  - Texte en police Unity par défaut (pas de TextMeshPro, qui demande d'importer des ressources).
+  - La créature ne tourne pas la tête vers l'utilisateur quand il la regarde : elle lui fait déjà face.
+
+### 4. Bureau : calibration à la main, mémoire et lâcher avec rebond (PRD §5.1 et §5.2, S2) — Validée (`764e6f5`)
 
 - **Date** : 18 octobre 2026.
 - **Objectif** : l'utilisateur indique son bureau en posant la main dessus. L'app retient ce bureau et la place des créatures d'une session à l'autre, et l'utilisateur peut en changer à tout moment. Le tout est un service que l'onboarding et le menu pourront appeler. Les créatures se saisissent à la main et retombent sur le bureau avec un rebond.

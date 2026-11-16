@@ -67,13 +67,12 @@ namespace Deskmates.Interaction
         public void DropFromHere()
         {
             DeskSession desk = DeskSession.Instance;
-            if (desk == null || !desk.HasDesk)
+            if (desk == null || !desk.TryGetLandingPlane(out DeskPlane plane))
             {
                 // No surface known yet: it stays where it was let go.
                 return;
             }
 
-            DeskPlane plane = desk.Plane;
             landing = plane.ClampToZone(transform.position, edgeMargin);
             drop = new DropMotion(transform.position.y - plane.Height, 9.81f * gravityScale, restitution);
             drop.Bounced += motion.PlayLanding;
@@ -102,7 +101,7 @@ namespace Deskmates.Interaction
             }
 
             DeskSession desk = DeskSession.Instance;
-            if (desk == null || !desk.HasDesk)
+            if (desk == null || !desk.TryGetLandingPlane(out DeskPlane plane))
             {
                 drop = null;
                 return;
@@ -115,7 +114,7 @@ namespace Deskmates.Interaction
             Vector3 position = transform.position;
             position.x = Mathf.Lerp(position.x, landing.x, follow);
             position.z = Mathf.Lerp(position.z, landing.z, follow);
-            position.y = desk.Plane.Height + drop.Height;
+            position.y = plane.Height + drop.Height;
             transform.SetPositionAndRotation(position,
                 Quaternion.RotateTowards(transform.rotation, FacingUser(position), turnSpeed * Time.deltaTime));
 
@@ -123,7 +122,7 @@ namespace Deskmates.Interaction
             offset.y = 0f;
             if (drop.Settled && offset.sqrMagnitude < 1e-6f)
             {
-                transform.SetPositionAndRotation(new Vector3(landing.x, desk.Plane.Height, landing.z), FacingUser(position));
+                transform.SetPositionAndRotation(new Vector3(landing.x, plane.Height, landing.z), FacingUser(position));
                 drop = null;
                 desk.SavePlacement(creatureId, transform);
                 Landed?.Invoke();

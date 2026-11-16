@@ -21,4 +21,6 @@ Every third-party asset, package or sound used in the app is listed here with it
 
 ## Third-party art, audio and fonts
 
-None yet.
+| Item | Author | Source | License |
+|---|---|---|---|
+| Lato Regular (`Assets/_Project/Art/Fonts/Lato-Regular.ttf`) | Łukasz Dziedzic | Copied from the URP package samples; also on Google Fonts | SIL Open Font License 1.1 |

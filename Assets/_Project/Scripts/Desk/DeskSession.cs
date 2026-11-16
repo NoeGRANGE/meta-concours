@@ -48,6 +48,16 @@ namespace Deskmates.Desk
 
         public DeskPlane Plane => new DeskPlane(root.position, root.eulerAngles.y, current.halfSize);
 
+        /// <summary>Where creatures land until a desk is calibrated: the scanned table, if there is one (PRD 5.1).</summary>
+        public DeskPlane? FallbackPlane { get; set; }
+
+        /// <summary>The surface a released creature falls onto: the desk, or the fallback before any calibration.</summary>
+        public bool TryGetLandingPlane(out DeskPlane plane)
+        {
+            plane = HasDesk ? Plane : FallbackPlane.GetValueOrDefault();
+            return HasDesk || FallbackPlane.HasValue;
+        }
+
         public DeskCalibration Calibration => calibration;
 
         void Awake()

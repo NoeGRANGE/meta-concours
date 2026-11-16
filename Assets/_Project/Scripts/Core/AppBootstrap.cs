@@ -56,7 +56,13 @@ namespace Deskmates.Core
 
             Pose headPose = HeadPose();
             MRUKRoom room = MRUK.Instance.GetCurrentRoom();
-            if (!DeskLocator.TryFindSpot(room, headPose, forwardDistance, edgeMargin, out Pose spot))
+            if (DeskLocator.TryFindSpot(room, headPose, forwardDistance, edgeMargin, out Pose spot))
+            {
+                // Released creatures land on the table until the desk is calibrated.
+                // shortcut: a small zone around the spot rather than the table's real edges, take them from MRUK if creatures fall off its sides.
+                desk.FallbackPlane = new DeskPlane(spot.position, spot.rotation.eulerAngles.y, new Vector2(0.25f, 0.15f));
+            }
+            else
             {
                 Debug.LogWarning("[Deskmates] No desk found in this room; placing the creature in front of the user.");
                 spot = DeskLocator.FloatingSpot(headPose, forwardDistance);

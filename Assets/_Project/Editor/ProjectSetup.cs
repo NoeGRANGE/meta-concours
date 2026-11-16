@@ -17,7 +17,9 @@ using Oculus.Interaction.OVR.Editor.QuickActions;
 using UnityEditor;
 using UnityEditor.Build;
 using UnityEditor.SceneManagement;
+using Deskmates.UI;
 using UnityEngine;
+using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using Object = UnityEngine.Object;
 
@@ -42,6 +44,13 @@ namespace Deskmates.Editor
         const string SandboxScenePath = "Assets/_Project/Scenes/Sandbox_Creature.unity";
         const string ParticleMaterialPath = "Packages/com.unity.render-pipelines.universal/Runtime/Materials/ParticlesUnlit.mat";
         const string SighPuffName = "SighPuff";
+        const string UiFontPath = "Assets/_Project/Art/Fonts/Lato-Regular.ttf";
+        const string RoundedSpritePath = "Assets/_Project/Art/UI/Rounded.png";
+
+        // Interface palette, taken from the creatures (STYLE.md): warm cream card, cocoa ink.
+        static readonly Color UiCard = new Color32(0xFB, 0xF6, 0xEE, 0xF2);
+        static readonly Color UiInk = new Color32(0x4A, 0x3B, 0x33, 0xFF);
+        static readonly Color UiMuted = new Color32(0x9A, 0x89, 0x7C, 0xFF);
 
         // Parts of Meta's interaction rig that move the user around: a seated app has no use for them (PRD 2.2).
         static readonly string[] LocomotionParts =
@@ -115,6 +124,9 @@ namespace Deskmates.Editor
             GameObject rig = InstantiatePackagePrefab(CameraRigPrefabPath);
             OVRManager manager = rig.GetComponent<OVRManager>();
             manager.isInsightPassthroughEnabled = true;
+
+            // Passthrough is always on: the user sees the real room, so the boundary needs not clear the creatures.
+            manager.shouldBoundaryVisibilityBeSuppressed = true;
 
             // Passthrough is composited behind the app, so the eye buffer must clear to transparent.
             Transform centerEye = rig.transform.Find("TrackingSpace/CenterEyeAnchor");
@@ -252,6 +264,23 @@ namespace Deskmates.Editor
                 SetSerialized(session, "calibration", property => property.objectReferenceValue = calibration);
                 SetSerialized(session.GetComponent<DeskDebugKeys>(), "session", property => property.objectReferenceValue = session);
                 SetSerialized(Object.FindAnyObjectByType<AppBootstrap>(), "desk", property => property.objectReferenceValue = session);
+
+                // Look and pinch (PRD 5): the gaze selector and the shared detail panel.
+                GazeSelector gaze = Object.FindAnyObjectByType<GazeSelector>();
+                if (gaze == null)
+                {
+                    gaze = new GameObject("Gaze").AddComponent<GazeSelector>();
+                }
+
+                SetSerialized(gaze, "head", property => property.objectReferenceValue = head);
+                // Rebuilt every time so a change of style reaches the scene.
+                DetailPanel existing = Object.FindAnyObjectByType<DetailPanel>(FindObjectsInactive.Include);
+                if (existing != null)
+                {
+                    Object.DestroyImmediate(existing.gameObject);
+                }
+
+                CreateDetailPanel(gaze);
             });
         }
 
@@ -289,6 +318,7 @@ namespace Deskmates.Editor
             config.anchorSupport = OVRProjectConfig.AnchorSupport.Enabled;
             config.sceneSupport = OVRProjectConfig.FeatureSupport.Required;
             config.insightPassthroughSupport = OVRProjectConfig.FeatureSupport.Required;
+            config.boundaryVisibilitySupport = OVRProjectConfig.FeatureSupport.Supported;
             OVRProjectConfig.CommitProjectConfig(config);
 
             // Meta's Project Setup Tool: XR loader, OpenXR features, player and quality settings.
@@ -343,6 +373,7 @@ namespace Deskmates.Editor
                 CreatureDataLink link = GetOrAddComponent<CreatureDataLink>(root);
                 GetOrAddComponent<CreatureFace>(root);
                 EnsureGrab(root, sourceId);
+                EnsurePeek(root);
 
                 Transform puffTransform = root.transform.Find(SighPuffName);
                 ParticleSystem puff = puffTransform != null
@@ -392,7 +423,6 @@ namespace Deskmates.Editor
             if (!root.TryGetComponent(out Grabbable grabbable))
             {
                 QuickActionsAPI.AddGrabInteraction(root);
-                QuickActionsAPI.AddDistanceGrabInteraction(root, DistanceGrabMode.PullToHand);
                 grabbable = root.GetComponent<Grabbable>();
             }
 
@@ -401,6 +431,169 @@ namespace Deskmates.Editor
             GrabAndDrop drop = GetOrAddComponent<GrabAndDrop>(root);
             SetSerialized(drop, "grabbable", property => property.objectReferenceValue = grabbable);
             SetSerialized(drop, "creatureId", property => property.stringValue = creatureId);
+        }
+
+        // Pinching at a distance selects (opens the panel), so a creature is only grabbed by a hand next to it.
+        // Prefabs built before this keep a distance grab child: remove it.
+        static void EnsurePeek(GameObject root)
+        {
+            Transform distanceGrab = root.transform.Find("ISDK_DistanceHandGrabInteraction");
+            if (distanceGrab != null)
+            {
+                Object.DestroyImmediate(distanceGrab.gameObject);
+            }
+
+            // Rebuilt every time so a change of style reaches the prefabs.
+            Transform oldPeek = root.transform.Find("Peek");
+            if (oldPeek != null)
+            {
+                Object.DestroyImmediate(oldPeek.gameObject);
+            }
+
+            Canvas peek = CreateWorldCanvas("Peek", root.transform, new Vector2(440f, 72f));
+            peek.transform.localPosition = new Vector3(0f, 0.14f, 0f);
+            Text text = CreateText(peek.transform, "Text", 28, TextAnchor.MiddleCenter);
+            Stretch(text.rectTransform);
+            text.rectTransform.offsetMin = new Vector2(18f, 0f);
+            text.rectTransform.offsetMax = new Vector2(-18f, 0f);
+            CreatureInfo info = GetOrAddComponent<CreatureInfo>(root);
+            SetSerialized(info, "peek", property => property.objectReferenceValue = peek);
+            SetSerialized(info, "peekText", property => property.objectReferenceValue = text);
+        }
+
+        static void CreateDetailPanel(GazeSelector gaze)
+        {
+            const float width = 440f;
+            const float rowHeight = 70f;
+            DetailPanel panel = new GameObject("Detail Panel").AddComponent<DetailPanel>();
+            Canvas canvas = CreateWorldCanvas("Canvas", panel.transform, new Vector2(width, 330f));
+
+            Text title = CreateText(canvas.transform, "Title", 26, TextAnchor.MiddleCenter);
+            title.fontStyle = FontStyle.Bold;
+            Place(title.rectTransform, 0f, 135f, width - 32f, 50f);
+            Text hint = CreateText(canvas.transform, "Hint", 18, TextAnchor.MiddleCenter);
+            hint.color = UiMuted;
+            Place(hint.rectTransform, 0f, -138f, width - 32f, 44f);
+
+            PanelRow[] rows = new PanelRow[3];
+            for (int i = 0; i < rows.Length; i++)
+            {
+                GameObject row = new GameObject($"Row {i}", typeof(RectTransform));
+                row.transform.SetParent(canvas.transform, false);
+                Place((RectTransform)row.transform, 0f, 70f - i * (rowHeight + 6f), width - 32f, rowHeight);
+                Image background = row.AddComponent<Image>();
+                Round(background, 2f);
+                background.color = PanelRow.Idle;
+                BoxCollider collider = row.AddComponent<BoxCollider>();
+                collider.size = new Vector3(width - 32f, rowHeight, 10f);
+                Text label = CreateText(row.transform, "Label", 22, TextAnchor.MiddleLeft);
+                Stretch(label.rectTransform);
+                label.rectTransform.offsetMin = new Vector2(16f, 0f);
+                label.rectTransform.offsetMax = new Vector2(-12f, 0f);
+                rows[i] = row.AddComponent<PanelRow>();
+                SetSerialized(rows[i], "label", property => property.objectReferenceValue = label);
+                SetSerialized(rows[i], "background", property => property.objectReferenceValue = background);
+            }
+
+            SetSerialized(panel, "gaze", property => property.objectReferenceValue = gaze);
+            SetSerialized(panel, "canvas", property => property.objectReferenceValue = canvas);
+            SetSerialized(panel, "title", property => property.objectReferenceValue = title);
+            SetSerialized(panel, "hint", property => property.objectReferenceValue = hint);
+            SetSerialized(panel, "rows", property =>
+            {
+                property.arraySize = rows.Length;
+                for (int i = 0; i < rows.Length; i++)
+                {
+                    property.GetArrayElementAtIndex(i).objectReferenceValue = rows[i];
+                }
+            });
+        }
+
+        // 0.6 mm per canvas unit: a 28-unit line is about 1.7 cm tall, over 0.9 degrees at arm's length (PRD 5).
+        static Canvas CreateWorldCanvas(string name, Transform parent, Vector2 size)
+        {
+            GameObject canvasObject = new GameObject(name, typeof(RectTransform));
+            canvasObject.transform.SetParent(parent, false);
+            Canvas canvas = canvasObject.AddComponent<Canvas>();
+            canvas.renderMode = RenderMode.WorldSpace;
+            RectTransform rect = (RectTransform)canvasObject.transform;
+            rect.sizeDelta = size;
+            rect.localScale = Vector3.one * 0.0006f;
+            Image background = canvasObject.AddComponent<Image>();
+            Round(background, 1f);
+            background.color = UiCard;
+            return canvas;
+        }
+
+        // A soft rounded card, like the creatures' vinyl: radius 24 units at multiplier 1, half that at 2.
+        static void Round(Image image, float multiplier)
+        {
+            image.sprite = EnsureRoundedSprite();
+            image.type = Image.Type.Sliced;
+            image.pixelsPerUnitMultiplier = multiplier;
+        }
+
+        // Generated once rather than drawn by hand, so the corners stay exactly circular.
+        static Sprite EnsureRoundedSprite()
+        {
+            const int size = 64;
+            const int radius = 24;
+            if (AssetDatabase.LoadAssetAtPath<Sprite>(RoundedSpritePath) == null)
+            {
+                Texture2D texture = new Texture2D(size, size, TextureFormat.RGBA32, false);
+                for (int y = 0; y < size; y++)
+                {
+                    for (int x = 0; x < size; x++)
+                    {
+                        Vector2 pixel = new Vector2(x + 0.5f, y + 0.5f);
+                        Vector2 corner = new Vector2(Mathf.Clamp(pixel.x, radius, size - radius), Mathf.Clamp(pixel.y, radius, size - radius));
+                        float alpha = Mathf.Clamp01(radius - Vector2.Distance(pixel, corner) + 0.5f);
+                        texture.SetPixel(x, y, new Color(1f, 1f, 1f, alpha));
+                    }
+                }
+
+                Directory.CreateDirectory(Path.GetDirectoryName(RoundedSpritePath));
+                File.WriteAllBytes(RoundedSpritePath, texture.EncodeToPNG());
+                Object.DestroyImmediate(texture);
+                AssetDatabase.ImportAsset(RoundedSpritePath);
+                TextureImporter importer = (TextureImporter)AssetImporter.GetAtPath(RoundedSpritePath);
+                importer.textureType = TextureImporterType.Sprite;
+                importer.spriteImportMode = SpriteImportMode.Single;
+                importer.spriteBorder = new Vector4(radius, radius, radius, radius);
+                importer.alphaIsTransparency = true;
+                importer.mipmapEnabled = false;
+                importer.SaveAndReimport();
+            }
+
+            return AssetDatabase.LoadAssetAtPath<Sprite>(RoundedSpritePath);
+        }
+
+        static Text CreateText(Transform parent, string name, int size, TextAnchor anchor)
+        {
+            GameObject textObject = new GameObject(name, typeof(RectTransform));
+            textObject.transform.SetParent(parent, false);
+            Text text = textObject.AddComponent<Text>();
+            text.font = AssetDatabase.LoadAssetAtPath<Font>(UiFontPath);
+            text.fontSize = size;
+            text.alignment = anchor;
+            text.color = UiInk;
+            text.horizontalOverflow = HorizontalWrapMode.Wrap;
+            text.verticalOverflow = VerticalWrapMode.Truncate;
+            return text;
+        }
+
+        static void Stretch(RectTransform rect)
+        {
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.offsetMin = Vector2.zero;
+            rect.offsetMax = Vector2.zero;
+        }
+
+        static void Place(RectTransform rect, float x, float y, float width, float height)
+        {
+            rect.anchoredPosition = new Vector2(x, y);
+            rect.sizeDelta = new Vector2(width, height);
         }
 
         static DeskSession CreateDeskSession()

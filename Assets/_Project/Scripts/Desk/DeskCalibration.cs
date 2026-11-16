@@ -17,6 +17,7 @@ namespace Deskmates.Desk
 
         readonly IsdkHandSampler hands = new IsdkHandSampler();
         FlatHandDetector detector;
+        float nextReport;
 
         public event Action<DeskPlane> Completed;
         public event Action Cancelled;
@@ -79,10 +80,36 @@ namespace Deskmates.Desk
             }
 
             hands.Sample(out HandSample left, out HandSample right);
+            if (Time.unscaledTime >= nextReport)
+            {
+                // Only way to see why a real hand is refused on the headset (adb logcat -s Unity).
+                nextReport = Time.unscaledTime + 2f;
+                Debug.Log($"[Deskmates] Calibrating. Left: {Describe(left)}. Right: {Describe(right)}.");
+            }
+
             if (detector.Step(Time.deltaTime, head.position, left, right, out DeskMeasurement measurement))
             {
                 Complete(measurement);
             }
+        }
+
+        string Describe(HandSample hand)
+        {
+            if (!hand.Valid)
+            {
+                return "not tracked";
+            }
+
+            float lowest = float.MaxValue;
+            float highest = float.MinValue;
+            foreach (Vector3 point in hand.Contacts)
+            {
+                lowest = Mathf.Min(lowest, point.y);
+                highest = Mathf.Max(highest, point.y);
+            }
+
+            return $"spread {(highest - lowest) * 100f:F1} cm (max {config.flatTolerance * 100f:F1}), "
+                + $"{(head.position.y - lowest) * 100f:F0} cm below the eyes";
         }
 
         DeskPlane BuildPlane(DeskMeasurement measurement)

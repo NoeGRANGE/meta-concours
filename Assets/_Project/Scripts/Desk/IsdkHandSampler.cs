@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Oculus.Interaction.Input;
 using UnityEngine;
 
@@ -20,26 +21,53 @@ namespace Deskmates.Desk
 
         readonly Vector3[] leftContacts = new Vector3[ContactJoints.Length];
         readonly Vector3[] rightContacts = new Vector3[ContactJoints.Length];
-        IHand left;
-        IHand right;
+
+        // The Meta rig has several hands per side (tracked hands, hands driven by the controllers):
+        // the tracked one is whichever has valid data right now.
+        readonly List<Hand> lefts = new List<Hand>();
+        readonly List<Hand> rights = new List<Hand>();
         float nextSearch;
 
         public void Sample(out HandSample leftSample, out HandSample rightSample)
         {
             FindHands();
-            leftSample = Read(left, leftContacts);
-            rightSample = Read(right, rightContacts);
+            leftSample = Read(Tracked(lefts), leftContacts);
+            rightSample = Read(Tracked(rights), rightContacts);
+        }
+
+        /// <summary>True while either hand pinches thumb and index together.</summary>
+        public bool IsPinching()
+        {
+            FindHands();
+            IHand left = Tracked(lefts);
+            IHand right = Tracked(rights);
+            return (left != null && left.GetIndexFingerIsPinching()) || (right != null && right.GetIndexFingerIsPinching());
+        }
+
+        static IHand Tracked(List<Hand> hands)
+        {
+            foreach (Hand hand in hands)
+            {
+                if (hand != null && hand.isActiveAndEnabled && hand.IsTrackedDataValid)
+                {
+                    return hand;
+                }
+            }
+
+            return null;
         }
 
         void FindHands()
         {
-            if ((left != null && right != null) || Time.unscaledTime < nextSearch)
+            if ((lefts.Count > 0 && rights.Count > 0) || Time.unscaledTime < nextSearch)
             {
                 return;
             }
 
             nextSearch = Time.unscaledTime + SearchInterval;
-            foreach (Hand hand in Object.FindObjectsByType<Hand>(FindObjectsSortMode.None))
+            lefts.Clear();
+            rights.Clear();
+            foreach (Hand hand in Object.FindObjectsByType<Hand>(FindObjectsInactive.Include))
             {
                 // Hand subclasses (synthetic hands, filters) sit on top of the tracked ones.
                 if (hand.GetType() != typeof(Hand))
@@ -47,14 +75,7 @@ namespace Deskmates.Desk
                     continue;
                 }
 
-                if (hand.Handedness == Handedness.Left)
-                {
-                    left ??= hand;
-                }
-                else
-                {
-                    right ??= hand;
-                }
+                (hand.Handedness == Handedness.Left ? lefts : rights).Add(hand);
             }
         }
 

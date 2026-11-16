@@ -156,7 +156,7 @@ Principe sur les Meta VR Glasses : **regarder pour cibler, pincer pour sélectio
 | Dans le panneau de détail : **marquer comme lu / fait** | Met à jour la source (ou le mode démo), fait baisser le stress, et peut déclencher le soulagement. |
 
 Contraintes :
-- Toutes les cibles font **≥ 44 px équivalents** et sont espacées ; la saisie fonctionne aussi au pincement à distance.
+- Toutes les cibles font **≥ 44 px équivalents** et sont espacées. Pincer à distance **sélectionne** (bulle, panneau, lignes) ; **saisir** une créature se fait main à côté d'elle, pour que les deux gestes ne se confondent pas (décision du 12 novembre).
 - Tout reste dans un **cône central d'environ ±25°** devant l'utilisateur assis, pour le FoV des lunettes.
 - Le panneau de détail est **petit, sobre, lisible** (texte ≥ 0,9° de hauteur angulaire), et se ferme d'un geste ou en détournant le regard plusieurs secondes.
 
