@@ -48,7 +48,7 @@ Modèle d'entrée : titre et statut, date, objectif (renvoi au PRD), ce qui a é
 
 Découpage de la semaine 2 (PRD §11) : 2. créature vivante, 3. mode démo, 4. calibration du bureau et lâcher avec rebond, 5. regard et pincement (bulle d'aperçu).
 
-### 9. Créature Agents, en mode démo (PRD §4.2, §4.4, §4.6 et §7.2 bis) — Validée (hash dans le commit suivant)
+### 9. Créature Agents, en mode démo (PRD §4.2, §4.4, §4.6 et §7.2 bis) — Validée (`3be917f`)
 
 - **Date** : 16 novembre 2026.
 - **Objectif** : la cinquième créature, pour les développeurs : elle s'inquiète quand une session d'agent de code attend une réponse, échoue ou a fini sans être consultée. Ici en mode démo ; la connexion réelle (relais local et hooks) vient ensuite.
@@ -65,7 +65,7 @@ Découpage de la semaine 2 (PRD §11) : 2. créature vivante, 3. mode démo, 4. 
   - Environ 22 000 triangles par créature, 113 000 au total, au-dessus du budget prudent du PRD (50 000). On ne simplifie que si les fps le demandent.
   - Jamais de nom d'outil dans l'app : « session », « waiting for you ».
 
-### 8. Finition de l'interface (STYLE.md) — Validée (hash dans le commit suivant)
+### 8. Finition de l'interface (STYLE.md) — Validée (`3be917f`)
 
 - **Date** : 16 novembre 2026.
 - **Fait** : `PopIn` fait apparaître la bulle, le panneau et la carte d'onboarding avec un petit rebond. La bulle a une pointe vers sa créature. Le panneau porte en haut une pastille à la couleur de la créature (`CreatureInfo.Accent`, réglée par `ProjectSetup` : bleu casquette, bleu-gris, lilas, sauge, jaune casque).
