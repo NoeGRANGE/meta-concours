@@ -83,7 +83,7 @@ def graphics():
                             "<div class='tagline'>Tiny creatures that panic so you don't have to.</div>"),
         "end": night_card("end", family + logo(900) +
                           "<div class='small'>META QUEST 3 · 3S &nbsp;·&nbsp; META VR GLASSES &nbsp;·&nbsp; DEMO MODE INCLUDED</div>"),
-        "todo_agents": night_card("todo_agents", "<div class='tagline'>[ Real coding session — to be filmed ]</div>"),
+        "relief": caption("relief", "Handle it…", "…and it sighs with relief", ACCENT["gesture"]),
         "problem": caption("problem", "Notifications interrupt.", "Fretlings just worry. Quietly.", ACCENT["gesture"]),
         "setup": caption("setup", "Hands only", "No controllers. No room scan.", ACCENT["gesture"]),
         "mail": caption("mail", "Mail", "heats up when important emails pile up", ACCENT["mail"], "mail_calm.png"),
@@ -101,21 +101,71 @@ def graphics():
 # One entry per shot: (source, start s, end s, overlay or None). A "card" shot is a still graphic of the given length.
 def edit(g):
     return [
-        ("clip", MAIN, 42.0, 52.0, None),          # hook: Agents panics, look, bubble, panel
+        ("clip", MAIN, 42.0, 49.5, None),          # hook: Agents panics, look, bubble, panel
         ("card", g["title"], 2.6),
         ("clip", MAIN, 84.0, 91.0, g["problem"]),   # calm desk while working
         ("clip", MAIN, 3.5, 18.5, g["setup"]),      # hand on desk, Mail drops in, look, pinch, the family arrives
+        ("states",),                                # the four stress states, on the night background
         ("clip", MAIN, 26.0, 30.5, g["mail"]),
         ("clip", MAIN, 67.5, 73.5, g["calendar"]),
         ("clip", MAIN, 35.0, 40.0, g["tasks"]),
-        ("clip", MAIN, 55.0, 59.5, g["messages"]),
-        ("clip", MAIN, 49.0, 54.5, g["agents"]),
-        ("card", g["todo_agents"], 3.0),
-        ("clip", MAIN, 117.0, 119.5, None),        # the desk before quitting
+        ("clip", MAIN, 54.0, 57.5, g["messages"]),
+        ("clip", MAIN, 49.5, 54.0, g["agents"]),
+        ("clip", MAIN, 57.5, 63.5, g["relief"]),    # the user clears the messages: calm again, with a sigh
+        ("clip", MAIN, 116.8, 118.6, None),        # the desk before quitting (stops before the head turns away)
         ("clip", RELAUNCH, 18.8, 20.1, g["memory"]),  # relaunched: the creatures come back
         ("clip", RELAUNCH, 22.3, 27.5, g["memory"]),
         ("card", g["end"], 4.5),
     ]
+
+
+STATES = [("calm", "Calm"), ("alert", "Alert"), ("stressed", "Stressed"), ("panic", "Panic")]
+STATES_LENGTH = 6.5
+STATES_STEP = 0.75   # seconds between two creatures appearing
+
+
+def states_layers():
+    """The night background with its line, then one transparent layer per state (creature and its name), so each
+    can drop in on its own."""
+    folder = BRAND / "stickers" / "states"
+    layers = [night_card("states_bg", "<div style='position:absolute;top:110px;width:100%;text-align:center;"
+                         "font-family:Fredoka;font-weight:600;font-size:64px;color:#FBF6EE'>"
+                         "The more it needs you, the more it shows.</div>")]
+    for i, (key, label) in enumerate(STATES):
+        art = folder / f"mail_{i}_{key}.png"
+        left = 120 + i * 430
+        layers.append(render(f"state_{i}", f"<img src='data:image/png;base64,{b64(art)}' style='position:absolute;"
+                             f"left:{left}px;top:250px;width:400px'><div style='position:absolute;left:{left}px;"
+                             f"top:680px;width:400px;text-align:center;font-family:Fredoka;font-weight:600;"
+                             f"font-size:48px;color:#FBF6EE'>{label}</div>"))
+    return layers
+
+
+def encode_states(index):
+    target = OUT / "parts" / f"{index:02d}.mp4"
+    layers = states_layers()
+    inputs, graph = [], f"[0:v]scale={W}:{H},format=rgba[s0];"
+    for layer in layers:
+        inputs += ["-loop", "1", "-t", f"{STATES_LENGTH}", "-i", str(layer)]
+    for i in range(1, len(layers)):
+        at = 0.5 + (i - 1) * STATES_STEP
+        graph += (f"[{i}:v]format=rgba,fade=in:st={at}:d=0.2:alpha=1[l{i}];"
+                  f"[s{i - 1}][l{i}]overlay=0:0[s{i}];")
+    last = len(layers) - 1
+    graph += (f"[s{last}]fade=in:st=0:d=0.3,fade=out:st={STATES_LENGTH - 0.3}:d=0.3,format=yuv420p,fps={FPS}[v];")
+    # Each creature lands with the app's own landing sound.
+    landing = ROOT / "Assets" / "_Project" / "Art" / "Audio" / "landing.wav"
+    sound_inputs = []
+    for i in range(len(STATES)):
+        sound_inputs += ["-i", str(landing)]
+        delay = int((0.5 + i * STATES_STEP) * 1000)
+        graph += f"[{len(layers) + i}:a]adelay={delay}|{delay},volume=0.6[d{i}];"
+    graph += "".join(f"[d{i}]" for i in range(len(STATES)))
+    graph += f"amix=inputs={len(STATES)}:normalize=0,apad,atrim=0:{STATES_LENGTH},aformat=sample_rates=48000:channel_layouts=stereo[a]"
+    subprocess.run(["ffmpeg", "-v", "error", "-y", *inputs, *sound_inputs, "-filter_complex", graph,
+                    "-map", "[v]", "-map", "[a]", "-t", f"{STATES_LENGTH}", "-c:v", "libx264", "-crf", "18",
+                    "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "192k", str(target)], check=True)
+    return target
 
 
 def encode_clip(index, source, start, end, overlay):
@@ -151,6 +201,8 @@ def main():
     for index, shot in enumerate(edit(g)):
         if shot[0] == "clip":
             parts.append(encode_clip(index, *shot[1:]))
+        elif shot[0] == "states":
+            parts.append(encode_states(index))
         else:
             parts.append(encode_card(index, shot[1], shot[2]))
         print("part", index, parts[-1].name)

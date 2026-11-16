@@ -50,11 +50,19 @@ STATES = {
     "panic": dict(scale=1.4, show=["EyeWide", "EyePupil", "Brow", "MouthOpen", "Sweat", "PostitPink", "PostitBlue"],
                   flames={"FlameMain": 1.3, "FlameLeft": 1.15, "FlameRight": 1.15, "FlameCore": 1.1}),
 }
+SERIES = {
+    "calm": dict(scale=1.0, show=["EyeClosed", "Cheek", "MouthSmile"], flames={}, color="#EFE6D8"),
+    "alert": dict(scale=1.10, show=["EyeOpen", "EyeShine", "MouthFlat"], flames={"FlameMain": 0.55}, color="#F2D3AE"),
+    "stressed": dict(scale=1.25, show=["EyeOpen", "Brow", "MouthWorried", "Sweat"],
+                     flames={"FlameMain": 0.85, "FlameLeft": 0.70, "FlameRight": 0.70, "FlameCore": 0.60}, color="#F1A661"),
+    "panic": dict(scale=1.40, show=["EyeWide", "EyePupil", "Brow", "MouthOpen"],
+                  flames={"FlameMain": 1.30, "FlameLeft": 1.15, "FlameRight": 1.15, "FlameCore": 1.10}, color="#E2553A"),
+}
 roots = {n: bpy.data.objects[n] for n in REST}
 home = {n: r.location.copy() for n, r in roots.items()}
 
-def apply_state(name, state, visible):
-    r, st = roots[name], STATES[state]
+def apply_state(name, state, visible, table=STATES):
+    r, st = roots[name], table[state]
     for o in r.children:
         base = o.name[len(name) + 1:].split("_")[0]
         on = visible
@@ -64,8 +72,11 @@ def apply_state(name, state, visible):
                 o.scale = [c * st["flames"][base] for c in o["base_scale"]]
         o.hide_render = o.hide_viewport = not on  # hidden-in-viewport parts are not evaluated, framing needs them current
     bm = bpy.data.materials[f"Body_{name}"]
-    col = hexcol(STRESS_PANIC if state == "panic" else REST[name])
-    bm.node_tree.nodes["Principled BSDF"].inputs["Base Color"].default_value = col
+    col = hexcol(st.get("color") or (STRESS_PANIC if state == "panic" else REST[name]))
+    p = bm.node_tree.nodes["Principled BSDF"]
+    p.inputs["Base Color"].default_value = col
+    p.inputs["Emission Color"].default_value = col
+    p.inputs["Emission Strength"].default_value = 0.12 if (state == "panic" and table is SERIES) else 0.0
     r.scale = (st["scale"],) * 3
 
 cam = sc.camera
@@ -99,6 +110,18 @@ def render(path):
     sc.render.filepath = path
     bpy.ops.render.render(write_still=True)
     print("[stickers] wrote", path)
+
+if sys.argv[-1] == "states":
+    # mail in its 4 states, one shared camera framed on panic so the size steps show
+    for m in REST:
+        apply_state(m, "calm", False); roots[m].location = home[m]
+    roots["Facteur"].location = (0, 0, 0)
+    apply_state("Facteur", "panic", True, SERIES)
+    frame(["Facteur"], 17, 15, (1200, 1200), margin=0.06)
+    for i, st in enumerate(SERIES):
+        apply_state("Facteur", st, True, SERIES)
+        render(os.path.join(OUT, f"mail_{i}_{st}.png"))
+    sys.exit(0)
 
 only = sys.argv[sys.argv.index("--") + 2:] if len(sys.argv) > sys.argv.index("--") + 2 else None
 for n in REST:
