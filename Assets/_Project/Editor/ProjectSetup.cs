@@ -144,9 +144,7 @@ namespace Deskmates.Editor
             PrefabUtility.RecordPrefabInstancePropertyModifications(mruk);
 
             AppBootstrap app = new GameObject("App").AddComponent<AppBootstrap>();
-            Creature mailCreature = AssetDatabase.LoadAssetAtPath<Creature>(PrefabPath(MailCreaturePrefab));
             SetSerialized(app, "head", property => property.objectReferenceValue = centerEye);
-            SetSerialized(app, "mailCreaturePrefab", property => property.objectReferenceValue = mailCreature);
 
             Directory.CreateDirectory(Path.GetDirectoryName(MainScenePath));
             AssetDatabase.Refresh();
@@ -263,7 +261,19 @@ namespace Deskmates.Editor
                 SetSerialized(calibration, "ripple", property => property.objectReferenceValue = ripple);
                 SetSerialized(session, "calibration", property => property.objectReferenceValue = calibration);
                 SetSerialized(session.GetComponent<DeskDebugKeys>(), "session", property => property.objectReferenceValue = session);
-                SetSerialized(Object.FindAnyObjectByType<AppBootstrap>(), "desk", property => property.objectReferenceValue = session);
+                AppBootstrap app = Object.FindAnyObjectByType<AppBootstrap>();
+                SetSerialized(app, "desk", property => property.objectReferenceValue = session);
+
+                // The whole family on the desk, mail creature first (PRD 4.2).
+                SetSerialized(app, "creaturePrefabs", property =>
+                {
+                    property.arraySize = Creatures.Length;
+                    for (int i = 0; i < Creatures.Length; i++)
+                    {
+                        property.GetArrayElementAtIndex(i).objectReferenceValue =
+                            AssetDatabase.LoadAssetAtPath<Creature>(PrefabPath(Creatures[i].prefab));
+                    }
+                });
 
                 // Look and pinch (PRD 5): the gaze selector and the shared detail panel.
                 GazeSelector gaze = Object.FindAnyObjectByType<GazeSelector>();
@@ -273,14 +283,18 @@ namespace Deskmates.Editor
                 }
 
                 SetSerialized(gaze, "head", property => property.objectReferenceValue = head);
-                // Rebuilt every time so a change of style reaches the scene.
+                // A panel from before the rounded style is rebuilt; a current one is kept, so the scene does not churn.
                 DetailPanel existing = Object.FindAnyObjectByType<DetailPanel>(FindObjectsInactive.Include);
-                if (existing != null)
+                bool current = existing != null && existing.GetComponentInChildren<Image>(true).sprite != null;
+                if (existing != null && !current)
                 {
                     Object.DestroyImmediate(existing.gameObject);
                 }
 
-                CreateDetailPanel(gaze);
+                if (!current)
+                {
+                    CreateDetailPanel(gaze);
+                }
             });
         }
 
@@ -444,8 +458,13 @@ namespace Deskmates.Editor
                 Object.DestroyImmediate(distanceGrab.gameObject);
             }
 
-            // Rebuilt every time so a change of style reaches the prefabs.
+            // A bubble from before the rounded style is rebuilt; a current one is kept, so prefabs do not churn.
             Transform oldPeek = root.transform.Find("Peek");
+            if (oldPeek != null && oldPeek.GetComponent<Image>().sprite != null)
+            {
+                return;
+            }
+
             if (oldPeek != null)
             {
                 Object.DestroyImmediate(oldPeek.gameObject);

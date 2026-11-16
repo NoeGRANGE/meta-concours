@@ -60,7 +60,9 @@ namespace Deskmates.Tests
             yield return new WaitUntil(() => load.IsCompleted);
             yield return null;
 
-            Creature mail = Object.FindAnyObjectByType<AppBootstrap>().MailCreature;
+            AppBootstrap app = Object.FindAnyObjectByType<AppBootstrap>();
+            Assert.AreEqual(4, app.Creatures.Count, "The whole family is on the table.");
+            Creature mail = app.MailCreature;
             Assert.IsNotNull(mail, "Before calibration the creature waits on the scanned table.");
 
             // Released above the table before any calibration, it falls back onto the table.
@@ -88,6 +90,19 @@ namespace Deskmates.Tests
             Assert.AreSame(desk.Root, mail.transform.parent, "The creature belongs to the new desk.");
             Assert.AreEqual(desk.Plane.Height, mail.transform.position.y, 1e-3, "It rests on the desk.");
             Assert.IsTrue(desk.TryGetPlacement("mail", out _), "Its place is remembered.");
+
+            limit = Time.time + 5f;
+            while (Time.time < limit && System.Linq.Enumerable.Any(app.Creatures, c => c.GetComponent<GrabAndDrop>().IsFalling))
+            {
+                yield return null;
+            }
+
+            foreach (Creature creature in app.Creatures)
+            {
+                GrabAndDrop each = creature.GetComponent<GrabAndDrop>();
+                Assert.AreSame(desk.Root, creature.transform.parent, $"{each.CreatureId} belongs to the desk.");
+                Assert.IsTrue(desk.TryGetPlacement(each.CreatureId, out _), $"{each.CreatureId}'s place is remembered.");
+            }
         }
     }
 }

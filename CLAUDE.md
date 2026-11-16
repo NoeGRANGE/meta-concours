@@ -48,6 +48,18 @@ Modèle d'entrée : titre et statut, date, objectif (renvoi au PRD), ce qui a é
 
 Découpage de la semaine 2 (PRD §11) : 2. créature vivante, 3. mode démo, 4. calibration du bureau et lâcher avec rebond, 5. regard et pincement (bulle d'aperçu).
 
+### 6. Toute la famille dans `Main` (PRD §4.2 et §7.1) — Validée (hash dans le commit suivant)
+
+- **Date** : 16 novembre 2026.
+- **Objectif** : les quatre créatures (Mail, Calendar, Tasks, Messages) sur le bureau dans `Main`, pour que le mode démo montre toute la famille.
+- **Fait** :
+  - `AppBootstrap` fait apparaître les quatre prefabs (`creaturePrefabs`, le Facteur en premier ; `MailCreature` reste pour les tests). Avant calibration, chaque créature est posée au point de la table du scan le plus proche de sa place dans la rangée, donc jamais hors de la table, et tournée vers l'utilisateur. Après calibration, chacune retrouve sa place mémorisée ou tombe sur son emplacement par défaut (`DeskLocator.DefaultSpot`, rangée espacée de 14 cm).
+  - Regard : quand le rayon large touche plusieurs créatures voisines, la plus proche de l'axe du regard l'emporte (sans allocation par image).
+  - `ProjectSetup` branche les quatre prefabs dans la scène. La bulle et le panneau ne sont plus reconstruits s'ils ont déjà le style arrondi, pour éviter des diffs à chaque génération.
+- **Fichiers** : `Scripts/Core/AppBootstrap.cs`, `Scripts/Core/DeskLocator.cs`, `Scripts/Interaction/GazeSelector.cs`, `Editor/ProjectSetup.cs`, `Tests/PlayMode/MainDeskFlowTests.cs`. Généré : `Scenes/Main.unity`.
+- **Vérifié** : 46 tests EditMode et 23 PlayMode passent. `MainDeskFlowTests` vérifie les quatre créatures sur la table, puis toutes posées sur le bureau avec leur place mémorisée.
+- **Pas encore vérifié** : sur le casque (lisibilité de la rangée, regard entre deux créatures voisines).
+
 ### 5. Regarder et pincer : bulle d’aperçu et panneau de détail (PRD §5, S2) — Validée (`a0d5783`)
 
 - **Date** : 12 novembre 2026.

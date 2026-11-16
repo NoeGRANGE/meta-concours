@@ -37,6 +37,7 @@ namespace Deskmates.Interaction
         [SerializeField] float wideRadius = 0.1f;
 
         readonly IsdkHandSampler hands = new IsdkHandSampler();
+        readonly RaycastHit[] wideHits = new RaycastHit[16];
         IGazeTarget hovered;
         float hoveredFor;
         bool dwelled;
@@ -47,10 +48,27 @@ namespace Deskmates.Interaction
         void Update()
         {
             IGazeTarget target = null;
-            if (Physics.SphereCast(head.position, radius, head.forward, out RaycastHit hit, maxDistance)
-                || Physics.SphereCast(head.position, wideRadius, head.forward, out hit, maxDistance))
+            if (Physics.SphereCast(head.position, radius, head.forward, out RaycastHit hit, maxDistance))
             {
                 target = hit.collider.GetComponentInParent<IGazeTarget>();
+            }
+            else
+            {
+                // Creatures sit side by side: of those the wide ray touches, take the one nearest the gaze line.
+                float best = float.MaxValue;
+                int count = Physics.SphereCastNonAlloc(head.position, wideRadius, head.forward, wideHits, maxDistance);
+                for (int i = 0; i < count; i++)
+                {
+                    RaycastHit wide = wideHits[i];
+                    IGazeTarget candidate = wide.collider.GetComponentInParent<IGazeTarget>();
+                    Vector3 toCenter = wide.collider.bounds.center - head.position;
+                    float offAxis = Vector3.Cross(head.forward, toCenter).magnitude;
+                    if (candidate != null && offAxis < best)
+                    {
+                        best = offAxis;
+                        target = candidate;
+                    }
+                }
             }
 
             // A destroyed target still compares unequal to null through the interface.
