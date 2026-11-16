@@ -48,7 +48,7 @@ Modèle d'entrée : titre et statut, date, objectif (renvoi au PRD), ce qui a é
 
 Découpage de la semaine 2 (PRD §11) : 2. créature vivante, 3. mode démo, 4. calibration du bureau et lâcher avec rebond, 5. regard et pincement (bulle d'aperçu).
 
-### 11. Sons (STYLE.md §6) — Validée (hash dans le commit suivant)
+### 11. Sons (STYLE.md §6) — Validée (`2fe2f36`)
 
 - **Date** : 16 novembre 2026.
 - **Fait** :
