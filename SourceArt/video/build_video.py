@@ -16,6 +16,10 @@ BRAND = ROOT / "SourceArt" / "brand"
 CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 W, H, FPS = 1920, 1080, 30
 
+MUSIC = ROOT / "SourceArt" / "music" / "music_a.wav"           # chosen variant (marimba and pizzicato)
+MUSIC_VOLUME = 0.16          # very light: a bed under the app's own sounds and, later, the voice
+MUSIC_ENDING = (128.0, 140.0)  # the hook's last statement and the final chord, kept for the video's last seconds
+
 MAIN = CAPTURES / "com.fretlings.app-20261116-232346-0.mp4"     # onboarding, family, calm desk
 RELAUNCH = CAPTURES / "com.oculus.vrshell-20261117-001818-0.mp4"  # app relaunched: creatures come back
 
@@ -153,11 +157,28 @@ def main():
 
     listing = OUT / "parts.txt"
     listing.write_text("".join(f"file '{p}'\n" for p in parts))
-    final = OUT / "fretlings_draft.mp4"
+    assembled = OUT / "assembled.mp4"
     subprocess.run(["ffmpeg", "-v", "error", "-y", "-f", "concat", "-safe", "0", "-i", str(listing),
                     "-c:v", "libx264", "-crf", "18", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "192k",
-                    "-movflags", "+faststart", str(final)], check=True)
+                    str(assembled)], check=True)
+    final = OUT / "fretlings_draft.mp4"
+    add_music(assembled, final)
     print("wrote", final)
+
+
+def add_music(video, target):
+    """Lays the music very low under the clips' own sound. Its opening runs as long as needed, then crossfades into
+    its real ending, so the final chord lands with the end card."""
+    length = float(subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0",
+                                   str(video)], check=True, capture_output=True, text=True).stdout)
+    start, end = MUSIC_ENDING
+    opening = length - (end - start) + 1.0
+    graph = (f"[1:a]asplit[a1][a2];[a1]atrim=0:{opening},asetpts=PTS-STARTPTS[m1];"
+             f"[a2]atrim={start}:{end},asetpts=PTS-STARTPTS[m2];[m1][m2]acrossfade=d=1[m];"
+             f"[m]volume={MUSIC_VOLUME}[mv];[0:a][mv]amix=inputs=2:duration=first:normalize=0[a]")
+    subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", str(video), "-i", str(MUSIC), "-filter_complex", graph,
+                    "-map", "0:v", "-map", "[a]", "-c:v", "copy", "-c:a", "aac", "-b:a", "192k",
+                    "-movflags", "+faststart", str(target)], check=True)
 
 
 if __name__ == "__main__":
