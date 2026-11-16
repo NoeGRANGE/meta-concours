@@ -1,10 +1,10 @@
 # Créatures de bureau – fichiers 3D
 
 ## Contenu
-- `creatures_bureau.blend` : la scène Blender complète. Collection **Famille** (les 4 créatures) et collection **Etats_Facteur** (le facteur dans ses 4 états).
-- `Facteur.glb`, `Reunions.glb`, `Messages.glb`, `Taches.glb` : une créature par fichier, prête pour Unity, à taille réelle (environ 7 cm de haut).
+- `creatures_bureau.blend` : la scène Blender complète. Collection **Famille** (les 5 créatures), collection **Etats_Facteur** (le facteur dans ses 4 états) et collection **Etats_Agents** (l'aperçu de la créature Agents).
+- `Facteur.glb`, `Reunions.glb`, `Messages.glb`, `Taches.glb`, `Agents.glb` : une créature par fichier, prête pour Unity, à taille réelle (environ 7 cm de haut).
 - `build_creatures.py` : le script qui génère tout. Modifie les couleurs, formes ou tailles, puis relance-le dans Blender (onglet Scripting > Run Script).
-- `rendu_etats_facteur.png` et `rendu_famille.png` : les aperçus.
+- `rendu_etats_facteur.png`, `rendu_famille.png` et `rendu_agents.png` (Agents calme, stressé, panique, vu d'un peu au-dessus) : les aperçus.
 
 ## Comment c'est construit
 Chaque créature est un objet racine qui contient des parties séparées. **Toutes les variantes sont incluses** dans le .glb : c'est le script Unity qui active et désactive les bonnes parties selon le niveau de stress.
@@ -21,6 +21,9 @@ Chaque créature est un objet racine qui contient des parties séparées. **Tout
 | `Sweat` | Goutte de sueur |
 | `FlameMain/Left/Right/Core` (Facteur) | Flammes, mises à l'échelle selon le stress |
 | `PostitPink/Blue` (Tâches) | Post-it supplémentaires qui s'empilent |
+| `HatDome`, `HatBrim`, `HatRidge` (Agents) | Casque de chantier jaune |
+| `LampHousing` + `LampLens` (Agents) | Lampe frontale. Le verre a sa propre matière `LampLens`, à rendre lumineuse dans Unity |
+| `BeadWire` + `Bead0` à `Bead4` (Agents) | Cadre et 5 billes d'état, de gauche à droite. Chaque bille a sa matière (`Bead0`…`Bead4`, grise par défaut) pour être recolorée seule |
 
 ## Réglages par état (à reproduire dans Unity)
 

@@ -140,7 +140,12 @@ M = {
     "postit_p": mat("PostitPink", "#F2A7C3", 0.85),
     "postit_b": mat("PostitBlue", "#9FD3F0", 0.85),
     "postit_line": mat("PostitLine", "#B99A2E", 0.85),
+    "hardhat": mat("HardHat", "#F2C230", 0.6),
+    "lamp": mat("LampHousing", "#4A4C52", 0.5),
+    "lens": mat("LampLens", "#FFF4DC", 0.2),
 }
+# une matière par bille : Unity recolore chaque bille séparément
+BEAD_MATS = [mat(f"Bead{i}", "#B8BEC4", 0.45) for i in range(5)]
 
 STRESS_COLORS = {"calm": "#EFE6D8", "alert": "#F2D3AE", "stressed": "#F1A661", "panic": "#E2553A"}
 
@@ -297,6 +302,36 @@ def build_creature(name, kind, body_color, col):
             ln = add(f"PostitLine{i}", mesh_obj(f"{name}_PostitLine{i}", cube_bm(w, 0.003, 0.014), col, M["postit_line"], smooth=False))
             orient(ln, l3, n3, -0.1)
 
+    elif kind == "agents":
+        # casque de chantier : dôme, bord tout autour (plus large devant), arête sur le dessus
+        z0, a, b, c = H - 0.1, 0.32, 0.30, 0.2
+        bm = sphere_bm(1, 40, 20)
+        bmesh.ops.delete(bm, geom=[v for v in bm.verts if v.co.z < -0.01], context='VERTS')
+        dome = add("HatDome", mesh_obj(f"{name}_HatDome", bm, col, M["hardhat"]))
+        dome.scale = (a, b, c); dome.location = (0, 0.01, z0)
+        brim = add("HatBrim", mesh_obj(f"{name}_HatBrim", sphere_bm(1, 40, 6), col, M["hardhat"]))
+        brim.scale = (0.38, 0.36, 0.025); brim.location = (0, -0.01, z0)
+        def on_dome(deg):
+            t = math.radians(deg)
+            p = Vector((0, 0.01 + b * math.sin(t), z0 + c * math.cos(t)))
+            return p, Vector((0, math.sin(t) / b, math.cos(t) / c)).normalized()
+        ridge = [tuple(on_dome(d)[0]) for d in range(-40, 81, 10)]
+        add("HatRidge", tube(f"{name}_HatRidge", ridge, 0.022, col, M["hardhat"]))
+        # lampe frontale : boîtier sur l'avant du dôme, verre devant (matière à part pour la lueur)
+        p, n = on_dome(-62)
+        hou = add("LampHousing", mesh_obj(f"{name}_LampHousing", sphere_bm(1, 24, 12), col, M["lamp"]))
+        hou.scale = (0.07, 0.04, 0.07); orient(hou, p + n * 0.015, n)
+        lens = add("LampLens", mesh_obj(f"{name}_LampLens", sphere_bm(1, 24, 12), col, M["lens"]))
+        lens.scale = (0.05, 0.02, 0.05); orient(lens, p + n * 0.045, n)
+        # cadre au-dessus de la tête, posé sur le bord du casque, avec 5 billes d'état
+        top, wx, wy = H + 0.30, 0.34, 0.02
+        wire = [(-wx, wy, z0), (-wx, wy, top - 0.04), (-wx + 0.01, wy, top - 0.01), (-wx + 0.04, wy, top),
+                (wx - 0.04, wy, top), (wx - 0.01, wy, top - 0.01), (wx, wy, top - 0.04), (wx, wy, z0)]
+        add("BeadWire", tube(f"{name}_BeadWire", wire, 0.012, col, M["lamp"]))
+        for i in range(5):
+            bd = add(f"Bead{i}", mesh_obj(f"{name}_Bead{i}", sphere_bm(1, 20, 12), col, BEAD_MATS[i]))
+            bd.scale = (0.056,) * 3; bd.location = ((i - 2) * 0.13, wy, top)
+
     return root, parts, body_mat, H
 
 
@@ -383,7 +418,8 @@ bpy.context.view_layer.layer_collection.children["Etats_Facteur"].exclude = True
 col_family = bpy.data.collections.new("Famille"); scene.collection.children.link(col_family)
 family = {}
 for (nm, kind, colr), x in zip((("Facteur", "facteur", "#EFE6D8"), ("Reunions", "reunions", "#DCE3E6"),
-                                ("Messages", "messages", "#D7E3CF"), ("Taches", "taches", "#E6DCEB")), xs):
+                                ("Messages", "messages", "#D7E3CF"), ("Taches", "taches", "#E6DCEB"),
+                                ("Agents", "agents", "#D9E4EC")), (-2.8, -1.4, 0, 1.4, 2.8)):
     root, parts, bmat, H = build_creature(nm, kind, colr, col_family)
     for o in parts.values():
         o["base_scale"] = list(o.scale)
@@ -418,6 +454,23 @@ for nm, (root, parts, bmat) in family.items():
         base = key.split("_")[0]
         if base in VARIANT_PARTS:
             o.hide_render = o.hide_viewport = base not in st["show"]
+
+# --- aperçu Agents : calme, stressé, panique, vus un peu d'en haut (comme depuis la chaise)
+bpy.context.view_layer.layer_collection.children["Famille"].exclude = True
+col_agents = bpy.data.collections.new("Etats_Agents"); scene.collection.children.link(col_agents)
+for state, x in zip(("calm", "stressed", "panic"), (-1.9, 0, 1.9)):
+    root, parts, bmat, H = build_creature(f"Agents_{state}", "agents", "#D9E4EC", col_agents)
+    for o in parts.values():
+        o["base_scale"] = list(o.scale)
+    apply_state(root, parts, bmat, state)
+    root.location = (x, 0, 0)
+cam = scene.camera; saved_cam = (cam.location.copy(), cam.rotation_euler.copy())
+cam.location = (0, -12, 6.6); cam.rotation_euler = (math.radians(65), 0, 0)
+scene.render.filepath = os.path.join(OUT, "rendu_agents.png")
+bpy.ops.render.render(write_still=True)
+cam.location, cam.rotation_euler = saved_cam
+bpy.context.view_layer.layer_collection.children["Famille"].exclude = False
+bpy.context.view_layer.layer_collection.children["Etats_Agents"].exclude = True
 
 bpy.context.view_layer.layer_collection.children["Etats_Facteur"].exclude = False
 bpy.ops.wm.save_as_mainfile(filepath=os.path.join(OUT, "creatures_bureau.blend"))
