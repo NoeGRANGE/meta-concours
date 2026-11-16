@@ -46,6 +46,7 @@ namespace Deskmates.Editor
         const string SighPuffName = "SighPuff";
         const string UiFontPath = "Assets/_Project/Art/Fonts/Lato-Regular.ttf";
         const string RoundedSpritePath = "Assets/_Project/Art/UI/Rounded.png";
+        const string OutlineMaterialPath = "Assets/_Project/Art/Materials/GazeOutline.mat";
 
         // Interface palette, taken from the creatures (STYLE.md): warm cream card, cocoa ink.
         static readonly Color UiCard = new Color32(0xFB, 0xF6, 0xEE, 0xF2);
@@ -403,6 +404,8 @@ namespace Deskmates.Editor
                 GetOrAddComponent<CreatureFace>(root);
                 EnsureGrab(root, sourceId);
                 EnsurePeek(root, accent);
+                Material outlineMaterial = EnsureOutlineMaterial();
+                SetSerialized(GetOrAddComponent<GazeOutline>(root), "material", property => property.objectReferenceValue = outlineMaterial);
                 if (sourceId == SourceIds.Agents)
                 {
                     GetOrAddComponent<AgentsLamp>(root);
@@ -643,6 +646,21 @@ namespace Deskmates.Editor
             }
 
             return AssetDatabase.LoadAssetAtPath<Sprite>(RoundedSpritePath);
+        }
+
+        // A material asset, not one made at run time, so the outline shader is kept in the build.
+        static Material EnsureOutlineMaterial()
+        {
+            Material material = AssetDatabase.LoadAssetAtPath<Material>(OutlineMaterialPath);
+            if (material == null)
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(OutlineMaterialPath));
+                material = new Material(Shader.Find("Fretlings/GazeOutline"));
+                AssetDatabase.CreateAsset(material, OutlineMaterialPath);
+                Debug.Log($"[Deskmates] Created {OutlineMaterialPath}.");
+            }
+
+            return material;
         }
 
         static Text CreateText(Transform parent, string name, int size, TextAnchor anchor)

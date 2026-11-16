@@ -31,9 +31,23 @@ namespace Deskmates.UI
             peek.gameObject.SetActive(false);
         }
 
-        public void OnGazeDwell() => peek.gameObject.SetActive(true);
+        public void OnGazeDwell()
+        {
+            peek.gameObject.SetActive(true);
+            if (TryGetComponent(out GazeOutline outline))
+            {
+                outline.Show(true);
+            }
+        }
 
-        public void OnGazeExit() => peek.gameObject.SetActive(false);
+        public void OnGazeExit()
+        {
+            peek.gameObject.SetActive(false);
+            if (TryGetComponent(out GazeOutline outline))
+            {
+                outline.Show(false);
+            }
+        }
 
         public void OnPinch()
         {

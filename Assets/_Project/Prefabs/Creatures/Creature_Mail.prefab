@@ -2535,6 +2535,7 @@ GameObject:
   - component: {fileID: 1149811012102894531}
   - component: {fileID: 1996012161589137478}
   - component: {fileID: 3019417050219416437}
+  - component: {fileID: 7734411930626055240}
   m_Layer: 0
   m_Name: Creature_Mail
   m_TagString: Untagged
@@ -2730,6 +2731,21 @@ MonoBehaviour:
   peek: {fileID: 3890090299676865712}
   peekText: {fileID: 2187259142414488548}
   accent: {r: 0.35686275, g: 0.49803922, b: 0.72156864, a: 1}
+--- !u!114 &7734411930626055240
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7266380818827047180}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 923a3040f6ea4fd5a43c1cae65601ddf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Deskmates::Deskmates.UI.GazeOutline
+  material: {fileID: 2100000, guid: 4d7bfa5e3dc55490797e11c3977ed9a1, type: 2}
+  fadeSeconds: 0.15
+  opacity: 0.9
 --- !u!1 &7352203274500632243
 GameObject:
   m_ObjectHideFlags: 0

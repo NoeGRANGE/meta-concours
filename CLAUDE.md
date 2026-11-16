@@ -48,6 +48,14 @@ Modèle d'entrée : titre et statut, date, objectif (renvoi au PRD), ce qui a é
 
 Découpage de la semaine 2 (PRD §11) : 2. créature vivante, 3. mode démo, 4. calibration du bureau et lâcher avec rebond, 5. regard et pincement (bulle d'aperçu).
 
+### 10. Contour au regard, et mesure des fps (PRD §5 et §8.2) — Validée (hash dans le commit suivant)
+
+- **Date** : 16 novembre 2026.
+- **Fait** :
+  - `GazeOutline` : un fin liseré (2,5 mm, en mètres réels donc constant quel que soit le stress) à la couleur de la créature, en fondu, tant que l'utilisateur la regarde, comme le contour des mains sur Quest. Shader `Fretlings/GazeOutline` (copie gonflée du corps, faces arrière seulement, compatible stéréo instanciée), matériau `Art/Materials/GazeOutline.mat` pour qu'il reste dans le build.
+  - Mesure sur Quest 3S, cinq créatures et démo en cours (logs `VrApi`) : **72 fps stables** (72 à 73/72), GPU à 19-27 %, CPU à 15-20 %, aucune image perdue (Stale=0, Tear=0). Les 113 000 triangles ne posent pas de problème.
+- **Vérifié** : 49 tests EditMode et 25 PlayMode passent, dont le contour qui s'affiche au regard. Pas encore vu sur le casque.
+
 ### 9. Créature Agents, en mode démo (PRD §4.2, §4.4, §4.6 et §7.2 bis) — Validée (`3be917f`)
 
 - **Date** : 16 novembre 2026.

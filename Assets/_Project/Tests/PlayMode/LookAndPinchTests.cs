@@ -53,6 +53,8 @@ namespace Deskmates.Tests
             info.OnGazeDwell();
             yield return null;
             Assert.IsTrue(info.transform.Find("Peek").gameObject.activeSelf, "Looking shows the peek bubble.");
+            yield return null;
+            Assert.IsTrue(info.GetComponent<GazeOutline>().IsShown, "Looking outlines the creature.");
 
             int reliefs = 0;
             mail.Relieved += () => reliefs++;

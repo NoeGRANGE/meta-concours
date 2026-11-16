@@ -2531,6 +2531,7 @@ GameObject:
   - component: {fileID: 6947935494294913800}
   - component: {fileID: 3331122805935854416}
   - component: {fileID: 3801344936494168771}
+  - component: {fileID: 5806551617280408209}
   m_Layer: 0
   m_Name: Creature_Tasks
   m_TagString: Untagged
@@ -2726,6 +2727,21 @@ MonoBehaviour:
   peek: {fileID: 8422023230028690584}
   peekText: {fileID: 7921315317933773760}
   accent: {r: 0.64705884, g: 0.54509807, b: 0.70980394, a: 1}
+--- !u!114 &5806551617280408209
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8010718195010402265}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 923a3040f6ea4fd5a43c1cae65601ddf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Deskmates::Deskmates.UI.GazeOutline
+  material: {fileID: 2100000, guid: 4d7bfa5e3dc55490797e11c3977ed9a1, type: 2}
+  fadeSeconds: 0.15
+  opacity: 0.9
 --- !u!1 &9160554858864291802
 GameObject:
   m_ObjectHideFlags: 0

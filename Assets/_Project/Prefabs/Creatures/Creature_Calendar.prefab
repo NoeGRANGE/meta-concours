@@ -2588,6 +2588,7 @@ GameObject:
   - component: {fileID: 7702794382497572141}
   - component: {fileID: 6520591877134904786}
   - component: {fileID: 4931311234607976987}
+  - component: {fileID: 623720609858965459}
   m_Layer: 0
   m_Name: Creature_Calendar
   m_TagString: Untagged
@@ -2783,6 +2784,21 @@ MonoBehaviour:
   peek: {fileID: 2170422169787803194}
   peekText: {fileID: 7210730340797051070}
   accent: {r: 0.49411765, g: 0.6039216, b: 0.65882355, a: 1}
+--- !u!114 &623720609858965459
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6743708881152519245}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 923a3040f6ea4fd5a43c1cae65601ddf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Deskmates::Deskmates.UI.GazeOutline
+  material: {fileID: 2100000, guid: 4d7bfa5e3dc55490797e11c3977ed9a1, type: 2}
+  fadeSeconds: 0.15
+  opacity: 0.9
 --- !u!1 &8305826080314485206
 GameObject:
   m_ObjectHideFlags: 0
