@@ -69,7 +69,10 @@ namespace Deskmates.Desk
             }
             else
             {
-                anchors = OVRManager.isHmdPresent ? new OvrAnchorService() : new InMemoryAnchorService();
+                // On a headset, real anchors always. isHmdPresent can still be false this early on the device, which
+                // used to fall back to session-only anchors and never save the desk.
+                bool realAnchors = !Application.isEditor || OVRManager.isHmdPresent;
+                anchors = realAnchors ? new OvrAnchorService() : new InMemoryAnchorService();
                 store = new DeskStore(DeskStore.DefaultPath);
             }
 

@@ -69,6 +69,11 @@ Découpage de la semaine 2 (PRD §11) : 2. créature vivante, 3. mode démo, 4. 
   - Pas encore d'œuf qui éclot ni de main fantôme animée (PRD §6.1) : texte seul, à ajouter s'il reste du temps.
   - Pas d'étape « Connect your Google account » : la connexion Google n'existe pas.
   - Pour revoir le tutoriel sur le casque, il faut désinstaller l'app.
+- **Retouche du 16 novembre**, après l'essai sur casque. La carte « Keep working » restait affichée, et les autres créatures n'apparaissaient jamais : le soupir n'arrive que si le stress a d'abord dépassé 0,6, ce qui n'était pas le cas quand la boîte avait été vidée tôt.
+  - « Keep working » disparaît après 4 s ; pendant cette attente, la démo tourne 4 fois plus vite pour que le Facteur s'inquiète en une dizaine de secondes.
+  - La famille arrive au soupir, ou quand l'utilisateur a vidé la boîte depuis le panneau, ou au plus tard 90 s après l'arrivée du Facteur. Ouvrir le panneau avant l'inquiétude saute directement à l'étape « Pinch each line ».
+  - Test ajouté : vider la boîte sans soupir amène la famille. 46 tests EditMode et 25 PlayMode passent.
+  - Mémoire du bureau (feature 4) : sur le casque, le bureau n'était jamais retrouvé. `DeskSession` choisissait les ancres selon `OVRManager.isHmdPresent`, encore faux à ce moment sur l'appareil : l'app prenait les ancres en mémoire et n'écrivait jamais `desks.json` (« Desk anchored » s'affichait une milliseconde après la calibration). Hors éditeur, les vraies ancres sont maintenant toujours utilisées. Pas encore vérifié sur le casque.
 
 ### 6. Toute la famille dans `Main` (PRD §4.2 et §7.1) — Validée (`650c3ec`)
 
