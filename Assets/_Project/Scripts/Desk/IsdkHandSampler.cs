@@ -22,8 +22,8 @@ namespace Deskmates.Desk
         readonly Vector3[] leftContacts = new Vector3[ContactJoints.Length];
         readonly Vector3[] rightContacts = new Vector3[ContactJoints.Length];
 
-        // The Meta rig has several hands per side (tracked hands, hands driven by the controllers):
-        // the tracked one is whichever has valid data right now.
+        // The Meta rig has several hands per side (tracked hands, hands driven by the controllers). On the headset a
+        // valid-looking one can sit frozen near the eyes, so of the valid ones the lowest is the user's hand.
         readonly List<Hand> lefts = new List<Hand>();
         readonly List<Hand> rights = new List<Hand>();
         float nextSearch;
@@ -31,30 +31,34 @@ namespace Deskmates.Desk
         public void Sample(out HandSample leftSample, out HandSample rightSample)
         {
             FindHands();
-            leftSample = Read(Tracked(lefts), leftContacts);
-            rightSample = Read(Tracked(rights), rightContacts);
+            leftSample = Read(Lowest(lefts), leftContacts);
+            rightSample = Read(Lowest(rights), rightContacts);
         }
 
         /// <summary>True while either hand pinches thumb and index together.</summary>
         public bool IsPinching()
         {
             FindHands();
-            IHand left = Tracked(lefts);
-            IHand right = Tracked(rights);
+            IHand left = Lowest(lefts);
+            IHand right = Lowest(rights);
             return (left != null && left.GetIndexFingerIsPinching()) || (right != null && right.GetIndexFingerIsPinching());
         }
 
-        static IHand Tracked(List<Hand> hands)
+        static IHand Lowest(List<Hand> hands)
         {
+            IHand lowest = null;
+            float lowestY = float.MaxValue;
             foreach (Hand hand in hands)
             {
-                if (hand != null && hand.isActiveAndEnabled && hand.IsTrackedDataValid)
+                if (hand != null && hand.isActiveAndEnabled && hand.IsTrackedDataValid &&
+                    hand.GetJointPose(HandJointId.HandWristRoot, out Pose wrist) && wrist.position.y < lowestY)
                 {
-                    return hand;
+                    lowest = hand;
+                    lowestY = wrist.position.y;
                 }
             }
 
-            return null;
+            return lowest;
         }
 
         void FindHands()

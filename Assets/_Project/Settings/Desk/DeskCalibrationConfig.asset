@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7d307b8b3e2884932900f2226e23b7db, type: 3}
   m_Name: DeskCalibrationConfig
   m_EditorClassIdentifier: Deskmates::Deskmates.Desk.DeskCalibrationConfig
-  flatTolerance: 0.025
+  flatTolerance: 0.035
   stillRadius: 0.015
   holdSeconds: 0.6
   minDropBelowEyes: 0.25

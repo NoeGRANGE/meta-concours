@@ -57,6 +57,7 @@ Découpage de la semaine 2 (PRD §11) : 2. créature vivante, 3. mode démo, 4. 
   - Branchements : premier impact d'une chute, soupir, ouverture et fermeture du panneau, élément marqué, onde de calibration, arrivée de la famille, nouvelle session en attente. Le Facteur seul (il a des flammes) a un souffle en boucle, en fondu, seulement en panique.
   - Les WAV intermédiaires de `SourceArt/sounds/` sont ignorés par git (régénérables) ; les 8 retenus sont dans `Art/Audio/`, sans normalisation d'Unity.
 - **Vérifié** : 49 tests EditMode et 25 PlayMode passent. Pas encore écouté sur le casque.
+- **Retouche du 16 novembre (calibration sur casque)** : après réinitialisation, la main posée à plat ne déclenchait plus rien. Les logs : main gauche à plat mesurée à 2,7–2,8 cm d'écart de hauteur (seuil 2,5 cm), et une « main droite » figée près des yeux (une main du rig valide mais pas celle de l'utilisateur), choisie à la place de la vraie. Seuil porté à 3,5 cm dans `DeskCalibrationConfig.asset` ; `IsdkHandSampler` retient, de chaque côté, la main valide la plus basse. 74 tests passent. Pas encore vérifié sur le casque.
 
 ### 10. Contour au regard, et mesure des fps (PRD §5 et §8.2) — Validée (`483e9a2`)
 
