@@ -106,7 +106,7 @@ def edit(g):
         ("clip", MAIN, 42.0, 49.5, None),          # hook: Agents panics, look, bubble, panel
         ("card", g["title"], 2.6),
         ("clip", MAIN, 84.0, 91.0, g["problem"]),   # calm desk while working
-        ("clip", MAIN, 3.5, 18.5, g["setup"]),      # hand on desk, Mail drops in, look, pinch, the family arrives
+        ("clip", MAIN, 4.65, 18.5, g["setup"]),  # hand on desk, Mail, look, pinch, family; starts after the Quest menu fades
         ("states",),                                # the four stress states, on the night background
         ("clip", MAIN, 26.0, 30.5, g["mail"]),
         ("clip", MAIN, 67.5, 73.5, g["calendar"]),
