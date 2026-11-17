@@ -84,6 +84,8 @@ def graphics():
         "end": night_card("end", family + logo(900) +
                           "<div class='small'>META QUEST 3 · 3S &nbsp;·&nbsp; META VR GLASSES &nbsp;·&nbsp; DEMO MODE INCLUDED</div>"),
         "relief": caption("relief", "Handle it…", "…and it sighs with relief", ACCENT["gesture"]),
+        "platforms": caption("platforms", "Plugs into your favorite platforms", "the mail, calendar, task and chat apps you already use",
+                             ACCENT["gesture"]),
         "problem": caption("problem", "Notifications interrupt.", "Fretlings just worry. Quietly.", ACCENT["gesture"]),
         "setup": caption("setup", "Hands only", "No controllers. No room scan.", ACCENT["gesture"]),
         "mail": caption("mail", "Mail", "heats up when important emails pile up", ACCENT["mail"], "mail_calm.png"),
@@ -112,9 +114,11 @@ def edit(g):
         ("clip", MAIN, 54.0, 57.5, g["messages"]),
         ("clip", MAIN, 49.5, 54.0, g["agents"]),
         ("clip", MAIN, 57.5, 63.5, g["relief"]),    # the user clears the messages: calm again, with a sigh
+        ("clip", MAIN, 91.0, 96.0, g["platforms"]),  # the whole family calm on the desk
         ("clip", MAIN, 116.8, 118.6, None),        # the desk before quitting (stops before the head turns away)
-        ("clip", RELAUNCH, 18.8, 20.1, g["memory"]),  # relaunched: the creatures come back
-        ("clip", RELAUNCH, 22.3, 27.5, g["memory"]),
+        # Relaunched: the empty desk, then the creatures appear at 20.45 s, slowed down so the moment reads clearly.
+        ("clip", RELAUNCH, 19.3, 20.6, g["memory"], 0.55, True, False),
+        ("clip", RELAUNCH, 22.45, 27.5, g["memory"], 1.0, False, True),   # same caption, kept on screen
         ("card", g["end"], 4.5),
     ]
 
@@ -168,16 +172,22 @@ def encode_states(index):
     return target
 
 
-def encode_clip(index, source, start, end, overlay):
+def encode_clip(index, source, start, end, overlay, speed=1.0, fade_in=True, fade_out=True):
     target = OUT / "parts" / f"{index:02d}.mp4"
-    duration = end - start
-    video = f"[0:v]fps={FPS},scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},setsar=1[v]"
-    inputs = ["-ss", f"{start}", "-t", f"{duration}", "-i", str(source)]
+    duration = (end - start) / speed
+    video = (f"[0:v]setpts=PTS/{speed},fps={FPS},scale={W}:{H}:force_original_aspect_ratio=increase,"
+             f"crop={W}:{H},setsar=1[v]")
+    inputs = ["-ss", f"{start}", "-t", f"{end - start}", "-i", str(source)]
     if overlay:
         inputs += ["-loop", "1", "-t", f"{duration}", "-i", str(overlay)]
-        video += (f";[1:v]format=rgba,fade=in:st=0.35:d=0.25:alpha=1,"
-                  f"fade=out:st={max(0.6, duration - 0.45)}:d=0.25:alpha=1[o];[v][o]overlay=0:0[v]")
-    subprocess.run(["ffmpeg", "-v", "error", "-y", *inputs, "-filter_complex", video, "-map", "[v]", "-map", "0:a",
+        fades = []
+        if fade_in:
+            fades.append("fade=in:st=0.35:d=0.25:alpha=1")
+        if fade_out:
+            fades.append(f"fade=out:st={max(0.6, duration - 0.45)}:d=0.25:alpha=1")
+        video += f";[1:v]{','.join(['format=rgba', *fades])}[o];[v][o]overlay=0:0[v]"
+    video += f";[0:a]atempo={speed}[a]" if speed >= 0.5 else ";[0:a]anull[a]"
+    subprocess.run(["ffmpeg", "-v", "error", "-y", *inputs, "-filter_complex", video, "-map", "[v]", "-map", "[a]",
                     "-c:v", "libx264", "-crf", "18", "-preset", "medium", "-pix_fmt", "yuv420p",
                     "-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-ac", "2", str(target)], check=True)
     return target
