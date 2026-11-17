@@ -20,6 +20,11 @@ MUSIC = ROOT / "SourceArt" / "music" / "music_a.wav"           # chosen variant 
 MUSIC_VOLUME = 0.16          # very light: a bed under the app's own sounds and, later, the voice
 MUSIC_ENDING = (128.0, 140.0)  # the hook's last statement and the final chord, kept for the video's last seconds
 
+VOICE = CAPTURES / "voice"   # the user's recorded lines: 01.m4a, 02.m4a… (a second take: 01b.m4a)
+# When each voice-over line starts in the edit, in seconds (see SourceArt/video/voiceover.md).
+VOICE_AT = {1: 0.4, 2: 7.9, 3: 10.5, 4: 17.4, 5: 24.3, 6: 31.5, 7: 37.9, 8: 42.4, 9: 48.4, 10: 53.4, 11: 57.0,
+            12: 61.6, 13: 67.6, 14: 72.6, 15: 81.9}
+
 MAIN = CAPTURES / "com.fretlings.app-20261116-232346-0.mp4"     # onboarding, family, calm desk
 RELAUNCH = CAPTURES / "com.oculus.vrshell-20261117-001818-0.mp4"  # app relaunched: creatures come back
 
@@ -228,17 +233,47 @@ def main():
     print("wrote", final)
 
 
+def voice_lines():
+    """The chosen take of each line: the plain file (01.m4a) if there is one, else the first alternative take."""
+    chosen = {}
+    for path in sorted(VOICE.glob("*")) if VOICE.exists() else []:
+        digits = "".join(ch for ch in path.stem[:2] if ch.isdigit())
+        if path.suffix.lower() in (".m4a", ".wav", ".mp3", ".aif", ".aiff") and digits:
+            number = int(digits)
+            if number in VOICE_AT and (number not in chosen or path.stem == f"{number:02d}"):
+                chosen[number] = path
+    return chosen
+
+
 def add_music(video, target):
     """Lays the music very low under the clips' own sound. Its opening runs as long as needed, then crossfades into
-    its real ending, so the final chord lands with the end card."""
+    its real ending, so the final chord lands with the end card. Voice-over lines, when recorded, are cleaned,
+    levelled and placed at their time, and the music ducks under them."""
     length = float(subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0",
                                    str(video)], check=True, capture_output=True, text=True).stdout)
     start, end = MUSIC_ENDING
     opening = length - (end - start) + 1.0
     graph = (f"[1:a]asplit[a1][a2];[a1]atrim=0:{opening},asetpts=PTS-STARTPTS[m1];"
              f"[a2]atrim={start}:{end},asetpts=PTS-STARTPTS[m2];[m1][m2]acrossfade=d=1[m];"
-             f"[m]volume={MUSIC_VOLUME}[mv];[0:a][mv]amix=inputs=2:duration=first:normalize=0[a]")
-    subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", str(video), "-i", str(MUSIC), "-filter_complex", graph,
+             f"[m]volume={MUSIC_VOLUME}[mv];")
+    lines = voice_lines()
+    inputs = ["-i", str(video), "-i", str(MUSIC)]
+    if lines:
+        for i, (number, path) in enumerate(sorted(lines.items())):
+            inputs += ["-i", str(path)]
+            delay = int(VOICE_AT[number] * 1000)
+            # Rumble and hiss out, a gentle compressor, the same loudness for every line, then its place in time.
+            graph += (f"[{i + 2}:a]aformat=sample_rates=48000:channel_layouts=stereo,highpass=f=80,afftdn=nf=-25,"
+                      f"acompressor=threshold=0.1:ratio=3:attack=10:release=150,loudnorm=I=-16:TP=-2,"
+                      f"aresample=48000,adelay={delay}|{delay}[v{i}];")
+        graph += "".join(f"[v{i}]" for i in range(len(lines)))
+        graph += f"amix=inputs={len(lines)}:normalize=0,apad[voice];[voice]asplit[vo][key];"
+        graph += ("[mv][key]sidechaincompress=threshold=0.02:ratio=6:attack=30:release=500[md];"
+                  "[0:a][md][vo]amix=inputs=3:duration=first:normalize=0,alimiter=limit=0.9[a]")
+        print("voice lines:", ", ".join(f"{n:02d}" for n in sorted(lines)))
+    else:
+        graph += "[0:a][mv]amix=inputs=2:duration=first:normalize=0[a]"
+    subprocess.run(["ffmpeg", "-v", "error", "-y", *inputs, "-filter_complex", graph,
                     "-map", "0:v", "-map", "[a]", "-c:v", "copy", "-c:a", "aac", "-b:a", "192k",
                     "-movflags", "+faststart", str(target)], check=True)
 
