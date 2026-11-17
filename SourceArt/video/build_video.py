@@ -82,7 +82,7 @@ def graphics():
         "title": night_card("title", logo(1100) +
                             "<div class='tagline'>Tiny creatures that panic so you don't have to.</div>"),
         "end": night_card("end", family + logo(900) +
-                          "<div class='small'>META QUEST 3 · 3S &nbsp;·&nbsp; META VR GLASSES &nbsp;·&nbsp; DEMO MODE INCLUDED</div>"),
+                          "<div class='small'>PRODUCTIVITY &nbsp;·&nbsp; META QUEST 3 · 3S &nbsp;·&nbsp; META VR GLASSES &nbsp;·&nbsp; DEMO MODE INCLUDED</div>"),
         "relief": caption("relief", "Handle it…", "…and it sighs with relief", ACCENT["gesture"]),
         "platforms": caption("platforms", "Plugs into your favorite platforms", "the mail, calendar, task and chat apps you already use",
                              ACCENT["gesture"]),
