@@ -16,7 +16,7 @@ LINES = {
     1: [(6.5, 9.7)],
     2: [(12.1, 13.6)],
     3: [(17.5, 23.4)],
-    4: [(26.6, 38.6)],
+    4: [(31.05, 38.6)],                # the retake: the first attempt stopped at "one sim…"
     5: [(43.3, 46.6)],
     6: [(51.4, 54.9)],
     7: [(66.4, 68.9)],                 # second take: the first said "mails"
@@ -24,7 +24,7 @@ LINES = {
     9: [(80.2, 83.8)],
     10: [(86.3, 88.8)],
     11: [(91.8, 94.8)],
-    12: [(98.0, 100.7), (108.1, 111.2)],  # "Handle it with a pinch, and it sighs" + "with relief", a 7 s pause cut out
+    12: [(108.15, 111.25)],            # the retake: the first attempt stopped at "and it's…"
     13: [(117.1, 120.1)],
     14: [(125.78, 129.0)],             # after the false start "You can…"
     15: [(134.0, 137.1)],

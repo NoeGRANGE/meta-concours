@@ -22,7 +22,7 @@ MUSIC_ENDING = (128.0, 140.0)  # the hook's last statement and the final chord, 
 
 VOICE = CAPTURES / "voice"   # the user's recorded lines: 01.m4a, 02.m4a… (a second take: 01b.m4a)
 # When each voice-over line starts in the edit, in seconds (see SourceArt/video/voiceover.md).
-VOICE_AT = {1: 0.4, 2: 7.9, 3: 10.4, 4: 17.4, 5: 27.4, 6: 31.5, 7: 37.9, 8: 42.4, 9: 48.4, 10: 53.4, 11: 57.0,
+VOICE_AT = {1: 0.4, 2: 7.9, 3: 10.4, 4: 17.4, 5: 25.0, 6: 31.5, 7: 37.9, 8: 42.4, 9: 48.4, 10: 53.4, 11: 57.0,
             12: 61.6, 13: 67.6, 14: 72.6, 15: 81.9}
 
 MAIN = CAPTURES / "com.fretlings.app-20261116-232346-0.mp4"     # onboarding, family, calm desk
