@@ -96,9 +96,22 @@ unity, c#, meta-xr-sdk, meta-interaction-sdk, mr-utility-kit, openxr, universal-
 
 ## Project media (galerie, 3:2, jusqu'à 15 images)
 
-1. `SourceArt/brand/devpost/thumbnail_a_desk.jpg` (aussi la vignette)
-2. `SourceArt/brand/devpost/thumbnail_b_brand.jpg`
-3. D'autres images à générer : les quatre états du Facteur, la famille sur le bureau, le panneau ouvert, la carte d'onboarding.
+Images dans `SourceArt/brand/devpost/gallery/` (1500 × 1000, JPG, toutes sous 250 Ko), régénérées par `SourceArt/brand/build_gallery.py`. Ordre conseillé, avec la description à coller (140 caractères au plus) :
+
+| # | Image | Description |
+|---|---|---|
+| 1 | `01_desk_hero.jpg` | Fretlings on a real desk, seen through the headset: the Agents creature panics as a coding session waits, and a hand reaches in. |
+| 2 | `02_hand_on_desk.jpg` | Setup takes one gesture: lay your hand flat on your desk. No controllers and no room scan needed. |
+| 3 | `03_meet_mail.jpg` | Your first Fretling drops onto the desk. The Mail creature worries about your inbox so you don't have to. |
+| 4 | `04_detail_panel.jpg` | Look at a creature, then pinch: a small panel lists its three most urgent items. Pinch a line to mark it read. |
+| 5 | `05_family.jpg` | Meet the family: Mail, Calendar, Tasks, Messages and Agents, lined up next to your keyboard. |
+| 6 | `06_states.jpg` | One stress value drives everything: face, colour, size and motion, from calm to panic. Never colour alone. |
+| 7 | `07_agents_panel.jpg` | Agents watches AI coding sessions: one bead per session, its lamp glows while one waits for your reply. |
+| 8 | `08_messages_waiting.jpg` | Messages starts chattering when people wait for an answer. The longer they wait, the more it worries. |
+| 9 | `09_relief.jpg` | Handle the last message and it deflates, sighs and calms down. That sigh is the reward. |
+| 10 | `10_calendar_panic.jpg` | Calendar turns red and trembles as your next meeting gets close, without a single pop-up. |
+| 11 | `11_remembers_desk.jpg` | Persistent spatial anchors: relaunch the app and every creature is right where you left it. |
+| 12 | `12_brand.jpg` | Fretlings: tiny creatures that panic so you don't have to. Hands-first, for Meta Quest 3, 3S and Meta VR Glasses. |
 
 ## Video
 
