@@ -148,6 +148,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 01ab7596721284b529dbae8fe1e829ca, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Deskmates::Deskmates.Data.DataHub
+  settings: {fileID: 11400000, guid: fdb751779442449d2b9822da1bc7acb8, type: 2}
   demoScript: {fileID: 11400000, guid: 73cc572f791774d57bb5f397efb30ce1, type: 2}
   speed: 1
 --- !u!4 &130503512

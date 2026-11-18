@@ -48,6 +48,16 @@ Modèle d'entrée : titre et statut, date, objectif (renvoi au PRD), ce qui a é
 
 Découpage de la semaine 2 (PRD §11) : 2. créature vivante, 3. mode démo, 4. calibration du bureau et lâcher avec rebond, 5. regard et pincement (bulle d'aperçu).
 
+### 12. Mode Live et compagnon de bureau (PRD §7.2, §7.2 bis et §7.4) — Validée (hash dans le commit suivant)
+
+- **Date** : 18 novembre 2026.
+- **Fait** :
+  - `DataSettings` (`Settings/Data/DataSettings.asset`) : **Mode** Demo (défaut, build du concours) ou Live. C'est le seul réglage à changer pour passer aux vraies données ; `DataHub` choisit les sources en conséquence.
+  - Mode Live (`Scripts/Data/Live/`) : `CompanionClient` trouve le compagnon sur le réseau local (annonce UDP sur le port 7879, ou adresse fixe) et s'appaire par un code ; `CompanionDataSource` implémente `IDataSource` pour Mail, Calendar, Tasks et Agents (lecture périodique, « read » et « done » renvoyés au compte) ; Messages reste calme. HTTP local autorisé dans les réglages Android.
+  - `Companion/` (Python, bibliothèque standard) : connexion au compte de mail, d'agenda et de tâches dans le navigateur de l'ordinateur (code d'autorisation avec PKCE, jetons dans `~/.fretlings`), lecture des mails non lus, des réunions des douze prochaines heures et des tâches datées ; réception des hooks des agents de code (`agent_hook.py`), qui ne transmettent que l'identifiant, le dossier, l'état et l'heure d'une session ; serveur HTTP protégé par le code d'appairage. Notice dans `Companion/README.md`.
+  - `README.md` du dépôt (page GitHub) et texte Devpost : les deux modes.
+- **Vérifié** : 51 tests EditMode (dont la lecture des données du compagnon) et 25 PlayMode passent ; tests du compagnon (`python3 -m unittest test_companion`) : suivi des sessions par les hooks, serveur, code d'appairage.
+
 ### 11. Sons (STYLE.md §6) — Validée (`2fe2f36`)
 
 - **Date** : 16 novembre 2026.

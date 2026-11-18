@@ -40,7 +40,7 @@ You interact with your hands only:
 
 The first minute teaches itself without a wall of text: lay your hand flat on your desk, watch a ripple run across it, meet the Mail creature, look, pinch, clear its inbox, and the rest of the family drops in. The next day, they are exactly where you left them.
 
-**The submitted build runs a realistic scripted demo** (invented names, no real accounts), so anyone can try the whole experience in three minutes, with no sign-in. Connecting each creature to the platforms you already use is our next step (see below).
+Fretlings has two data modes. **Demo mode**, used in the submitted build, plays a realistic scripted day (invented names, no real accounts), so anyone can try the whole experience in three minutes with no sign-in. **Live mode** connects Mail, Calendar, Tasks and Agents to your real accounts and coding sessions through a small companion on your computer, which signs in through your browser and receives your coding agents' hooks; switching modes is a single setting.
 
 ## How we built it
 
@@ -49,7 +49,7 @@ The first minute teaches itself without a wall of text: lay your hand flat on yo
 - **Spatial anchors.** Each desk gets a persistent anchor; the creatures are children of it, so they come back exactly where you left them, across sessions and even across several desks (home, office).
 - **Gaze and pinch.** Quest 3 and 3S have no eye tracking, so we target with the head direction, with a precise ray and a wider fallback that picks the creature nearest the line of sight. A pinch from either hand selects.
 - **Procedural animation.** No keyframes: squash and stretch, breathing, hops, trembling and the relief sigh are all driven from the smoothed stress value, with hysteresis so faces never flicker between states.
-- **One data interface.** The creatures read from a common data-source interface; the demo player implements it today, real connectors will implement it tomorrow, and nothing else in the app knows the difference.
+- **One data interface, two modes.** The creatures read from a common data-source interface, implemented by the demo player and by the Live sources. In Live mode the headset finds the desktop companion on the local network, pairs with a code, and reads unread mail, upcoming meetings, open tasks and coding-agent sessions; marking an item read or done goes back to the real account. Only a session's name, state and time ever leave the coding agents' hooks.
 - **Original assets only.** The creatures are modelled by a Blender Python script; every sound effect and the video's music are synthesized by our own code. No third-party art or audio.
 - **Tested headless.** 74 automated EditMode and PlayMode tests cover the stress formulas, the demo scenario, the desk calibration and memory, onboarding, and the look-and-pinch flow.
 
@@ -74,8 +74,8 @@ Ambient design is mostly restraint: almost nothing moves when all is well, stron
 
 ## What's next for Fretlings
 
-- **Connect to your existing platforms**: the major mail, calendar and task providers first, then chat.
-- **Real AI coding sessions** for the Agents creature, through a tiny companion on your computer that only shares a session's name, state and time.
+- **Live mode for everyone**: sign-in straight from the headset, more mail, calendar and task providers, and chat for the Messages creature.
+- **More coding agents** reporting to the Agents creature, and a one-click hook setup in the companion.
 - **Snooze** a creature by putting it to sleep on the edge of the desk, a **daily recap** and a streak for the end-of-day ritual.
 - **Eye-based gaze on Meta VR Glasses**, and a design tuned for their field of view.
 ```

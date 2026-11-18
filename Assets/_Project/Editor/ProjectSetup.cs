@@ -5,6 +5,7 @@ using Deskmates.Core;
 using Deskmates.Creatures;
 using Deskmates.Data;
 using Deskmates.Data.Demo;
+using Deskmates.Data.Live;
 using Deskmates.Data.Stress;
 using Deskmates.Desk;
 using Deskmates.Interaction;
@@ -39,6 +40,7 @@ namespace Deskmates.Editor
         const string CreatureConfigsFolder = "Assets/_Project/Settings/Creatures";
         const string StressCalculatorsFolder = "Assets/_Project/Settings/Stress";
         const string DemoScriptPath = "Assets/_Project/Settings/Data/DemoScript_Default.asset";
+        const string DataSettingsPath = "Assets/_Project/Settings/Data/DataSettings.asset";
         const string DeskCalibrationConfigPath = "Assets/_Project/Settings/Desk/DeskCalibrationConfig.asset";
         const string MainScenePath = "Assets/_Project/Scenes/Main.unity";
         const string SandboxScenePath = "Assets/_Project/Scenes/Sandbox_Creature.unity";
@@ -231,6 +233,7 @@ namespace Deskmates.Editor
         public static void AddDemoDataToScenes()
         {
             EnsureDemoScript();
+            EnsureDataSettings();
             EditScene(MainScenePath, () => EnsureDataHub(true));
             EditScene(SandboxScenePath, () =>
             {
@@ -375,6 +378,9 @@ namespace Deskmates.Editor
         {
             PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, AndroidPackageName);
             PlayerSettings.productName = "Fretlings";
+
+            // Live mode talks to the desktop companion over plain HTTP on the local network.
+            PlayerSettings.insecureHttpOption = InsecureHttpOption.AlwaysAllowed;
 
             // Hands-first is an elimination criterion of the competition (PRD 2.1): never require controllers.
             OVRProjectConfig config = OVRProjectConfig.CachedProjectConfig;
@@ -780,6 +786,20 @@ namespace Deskmates.Editor
 
         // The default scenario (PRD 7.1): about three minutes in which each creature goes from calm to panic and
         // back, at different moments. Names are invented; nothing refers to a real brand or person.
+        // Demo by default; switching its mode to Live connects the creatures to the desktop companion.
+        static void EnsureDataSettings()
+        {
+            if (AssetDatabase.LoadAssetAtPath<DataSettings>(DataSettingsPath) != null)
+            {
+                return;
+            }
+
+            Directory.CreateDirectory(Path.GetDirectoryName(DataSettingsPath));
+            AssetDatabase.CreateAsset(ScriptableObject.CreateInstance<DataSettings>(), DataSettingsPath);
+            AssetDatabase.SaveAssets();
+            Debug.Log($"[Deskmates] Created {DataSettingsPath}.");
+        }
+
         static DemoScript EnsureDemoScript()
         {
             DemoScript script = AssetDatabase.LoadAssetAtPath<DemoScript>(DemoScriptPath);
@@ -893,6 +913,8 @@ namespace Deskmates.Editor
             }
 
             SetSerialized(hub, "demoScript", property => property.objectReferenceValue = script);
+            DataSettings settings = AssetDatabase.LoadAssetAtPath<DataSettings>(DataSettingsPath);
+            SetSerialized(hub, "settings", property => property.objectReferenceValue = settings);
             return hub;
         }
 
