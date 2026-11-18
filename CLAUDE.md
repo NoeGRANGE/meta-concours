@@ -48,7 +48,7 @@ Modèle d'entrée : titre et statut, date, objectif (renvoi au PRD), ce qui a é
 
 Découpage de la semaine 2 (PRD §11) : 2. créature vivante, 3. mode démo, 4. calibration du bureau et lâcher avec rebond, 5. regard et pincement (bulle d'aperçu).
 
-### 12. Mode Live et compagnon de bureau (PRD §7.2, §7.2 bis et §7.4) — Validée (hash dans le commit suivant)
+### 12. Mode Live et compagnon de bureau (PRD §7.2, §7.2 bis et §7.4) — Validée (`d9f37dd`)
 
 - **Date** : 18 novembre 2026.
 - **Fait** :
