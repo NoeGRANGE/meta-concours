@@ -48,7 +48,7 @@ Modèle d'entrée : titre et statut, date, objectif (renvoi au PRD), ce qui a é
 
 Découpage de la semaine 2 (PRD §11) : 2. créature vivante, 3. mode démo, 4. calibration du bureau et lâcher avec rebond, 5. regard et pincement (bulle d'aperçu).
 
-### 12. Mode Live et compagnon de bureau (PRD §7.2, §7.2 bis et §7.4) — Validée (`d9f37dd`)
+### 12. Mode Live et compagnon de bureau (PRD §7.2, §7.2 bis et §7.4) — Validée (`9ae49ab`)
 
 - **Date** : 18 novembre 2026.
 - **Fait** :
@@ -58,7 +58,7 @@ Découpage de la semaine 2 (PRD §11) : 2. créature vivante, 3. mode démo, 4. 
   - `README.md` du dépôt (page GitHub) et texte Devpost : les deux modes.
 - **Vérifié** : 51 tests EditMode (dont la lecture des données du compagnon) et 25 PlayMode passent ; tests du compagnon (`python3 -m unittest test_companion`) : suivi des sessions par les hooks, serveur, code d'appairage.
 
-### 11. Sons (STYLE.md §6) — Validée (`2fe2f36`)
+### 11. Sons (STYLE.md §6) — Validée (`13b8e63`)
 
 - **Date** : 16 novembre 2026.
 - **Fait** :
@@ -69,7 +69,7 @@ Découpage de la semaine 2 (PRD §11) : 2. créature vivante, 3. mode démo, 4. 
 - **Vérifié** : 49 tests EditMode et 25 PlayMode passent. Pas encore écouté sur le casque.
 - **Retouche du 16 novembre (calibration sur casque)** : après réinitialisation, la main posée à plat ne déclenchait plus rien. Les logs : main gauche à plat mesurée à 2,7–2,8 cm d'écart de hauteur (seuil 2,5 cm), et une « main droite » figée près des yeux (une main du rig valide mais pas celle de l'utilisateur), choisie à la place de la vraie. Seuil porté à 3,5 cm dans `DeskCalibrationConfig.asset` ; `IsdkHandSampler` retient, de chaque côté, la main valide la plus basse. 74 tests passent. Pas encore vérifié sur le casque.
 
-### 10. Contour au regard, et mesure des fps (PRD §5 et §8.2) — Validée (`483e9a2`)
+### 10. Contour au regard, et mesure des fps (PRD §5 et §8.2) — Validée (`4912005`)
 
 - **Date** : 16 novembre 2026.
 - **Fait** :
@@ -77,7 +77,7 @@ Découpage de la semaine 2 (PRD §11) : 2. créature vivante, 3. mode démo, 4. 
   - Mesure sur Quest 3S, cinq créatures et démo en cours (logs `VrApi`) : **72 fps stables** (72 à 73/72), GPU à 19-27 %, CPU à 15-20 %, aucune image perdue (Stale=0, Tear=0). Les 113 000 triangles ne posent pas de problème.
 - **Vérifié** : 49 tests EditMode et 25 PlayMode passent, dont le contour qui s'affiche au regard. Pas encore vu sur le casque.
 
-### 9. Créature Agents, en mode démo (PRD §4.2, §4.4, §4.6 et §7.2 bis) — Validée (`3be917f`)
+### 9. Créature Agents, en mode démo (PRD §4.2, §4.4, §4.6 et §7.2 bis) — Validée (`cb264be`)
 
 - **Date** : 16 novembre 2026.
 - **Objectif** : la cinquième créature, pour les développeurs : elle s'inquiète quand une session d'agent de code attend une réponse, échoue ou a fini sans être consultée. Ici en mode démo ; la connexion réelle (relais local et hooks) vient ensuite.
@@ -94,13 +94,13 @@ Découpage de la semaine 2 (PRD §11) : 2. créature vivante, 3. mode démo, 4. 
   - Environ 22 000 triangles par créature, 113 000 au total, au-dessus du budget prudent du PRD (50 000). On ne simplifie que si les fps le demandent.
   - Jamais de nom d'outil dans l'app : « session », « waiting for you ».
 
-### 8. Finition de l'interface (STYLE.md) — Validée (`3be917f`)
+### 8. Finition de l'interface (STYLE.md) — Validée (`cb264be`)
 
 - **Date** : 16 novembre 2026.
 - **Fait** : `PopIn` fait apparaître la bulle, le panneau et la carte d'onboarding avec un petit rebond. La bulle a une pointe vers sa créature. Le panneau porte en haut une pastille à la couleur de la créature (`CreatureInfo.Accent`, réglée par `ProjectSetup` : bleu casquette, bleu-gris, lilas, sauge, jaune casque).
 - **Vérifié** : tests ci-dessus. Pas encore vu sur le casque.
 
-### 7. Onboarding du premier lancement (PRD §6.1, S4) — Validée (`5714c6e`)
+### 7. Onboarding du premier lancement (PRD §6.1, S4) — Validée (`b5f3b0f`)
 
 - **Date** : 16 novembre 2026.
 - **Objectif** : un premier lancement clair en moins de 60 s, sans mur de texte : poser la main, rencontrer le Facteur, le regarder, le pincer, le calmer, puis découvrir la famille.
@@ -127,7 +127,7 @@ Découpage de la semaine 2 (PRD §11) : 2. créature vivante, 3. mode démo, 4. 
   - Test ajouté : vider la boîte sans soupir amène la famille. 46 tests EditMode et 25 PlayMode passent.
   - Mémoire du bureau (feature 4) : sur le casque, le bureau n'était jamais retrouvé. `DeskSession` choisissait les ancres selon `OVRManager.isHmdPresent`, encore faux à ce moment sur l'appareil : l'app prenait les ancres en mémoire et n'écrivait jamais `desks.json` (« Desk anchored » s'affichait une milliseconde après la calibration). Hors éditeur, les vraies ancres sont maintenant toujours utilisées. Pas encore vérifié sur le casque.
 
-### 6. Toute la famille dans `Main` (PRD §4.2 et §7.1) — Validée (`650c3ec`)
+### 6. Toute la famille dans `Main` (PRD §4.2 et §7.1) — Validée (`5e3483e`)
 
 - **Date** : 16 novembre 2026.
 - **Objectif** : les quatre créatures (Mail, Calendar, Tasks, Messages) sur le bureau dans `Main`, pour que le mode démo montre toute la famille.
@@ -139,7 +139,7 @@ Découpage de la semaine 2 (PRD §11) : 2. créature vivante, 3. mode démo, 4. 
 - **Vérifié** : 46 tests EditMode et 23 PlayMode passent. `MainDeskFlowTests` vérifie les quatre créatures sur la table, puis toutes posées sur le bureau avec leur place mémorisée.
 - **Pas encore vérifié** : sur le casque (lisibilité de la rangée, regard entre deux créatures voisines).
 
-### 5. Regarder et pincer : bulle d’aperçu et panneau de détail (PRD §5, S2) — Validée (`a0d5783`)
+### 5. Regarder et pincer : bulle d’aperçu et panneau de détail (PRD §5, S2) — Validée (`20ce510`)
 
 - **Date** : 12 novembre 2026.
 - **Objectif** : regarder une créature affiche un aperçu ; pincer en la regardant ouvre ses éléments les plus urgents ; regarder une ligne et pincer la marque lue ou faite. C'est l'action de l'utilisateur qui fait retomber le stress et déclenche le soupir.
@@ -174,7 +174,7 @@ Découpage de la semaine 2 (PRD §11) : 2. créature vivante, 3. mode démo, 4. 
   - Texte en police Unity par défaut (pas de TextMeshPro, qui demande d'importer des ressources).
   - La créature ne tourne pas la tête vers l'utilisateur quand il la regarde : elle lui fait déjà face.
 
-### 4. Bureau : calibration à la main, mémoire et lâcher avec rebond (PRD §5.1 et §5.2, S2) — Validée (`764e6f5`)
+### 4. Bureau : calibration à la main, mémoire et lâcher avec rebond (PRD §5.1 et §5.2, S2) — Validée (`8120a73`)
 
 - **Date** : 18 octobre 2026.
 - **Objectif** : l'utilisateur indique son bureau en posant la main dessus. L'app retient ce bureau et la place des créatures d'une session à l'autre, et l'utilisateur peut en changer à tout moment. Le tout est un service que l'onboarding et le menu pourront appeler. Les créatures se saisissent à la main et retombent sur le bureau avec un rebond.
@@ -240,7 +240,7 @@ Découpage de la semaine 2 (PRD §11) : 2. créature vivante, 3. mode démo, 4. 
   - Pas encore d'indication visuelle pendant la calibration (main fantôme) : elle viendra avec l'onboarding (S4).
   - Au premier placement, le Facteur tombe de 20 cm ; l'onde s'étend sur 30 cm de rayon. Réglés par l'utilisateur après essai dans le simulateur.
 
-### 3. Mode démo (PRD §7.1, §7.4 et §4.4, S2) — Validée (`9a103f7`)
+### 3. Mode démo (PRD §7.1, §7.4 et §4.4, S2) — Validée (`e69b31f`)
 
 - **Date** : 18 octobre 2026.
 - **Objectif** : les créatures réagissent à de fausses données réalistes qui évoluent sur 3 minutes, à travers la même interface que les futures vraies sources.
@@ -280,7 +280,7 @@ Découpage de la semaine 2 (PRD §11) : 2. créature vivante, 3. mode démo, 4. 
   - L'action *Snooze* sur un élément renvoie `false` : le snooze s'applique à une créature entière (PRD §5).
   - La démo ne boucle pas ; la case *Loop* du scénario permet de la faire boucler.
 
-### 2.1 Visière de la casquette du Facteur — Validée (`1eb87c0`)
+### 2.1 Visière de la casquette du Facteur — Validée (`5468070`)
 
 - **Date** : 18 octobre 2026.
 - **Objectif** : corriger un défaut repéré par l'utilisateur : la partie plate à l'avant de la casquette semblait disparaître dans le corps.
@@ -301,7 +301,7 @@ Découpage de la semaine 2 (PRD §11) : 2. créature vivante, 3. mode démo, 4. 
   - Les trois autres `.glb` de `SourceArt` restent ceux de l'export d'origine (Blender 5.2), alors que le `.blend` et les rendus viennent du nouvel export (Blender 5.1.1).
   - `SourceArt/creatures_bureau.zip` contient toujours l'ancienne version. Laissé tel quel, faute de décision.
 
-### 2. Créature vivante (PRD §4.3 à 4.5, S2) — Validée (`38b1192`)
+### 2. Créature vivante (PRD §4.3 à 4.5, S2) — Validée (`1f4a869`)
 
 - **Date** : 18 octobre 2026.
 - **Objectif** : la créature réagit à une valeur de stress par son visage, son mouvement, sa couleur et ses effets, puis soupire de soulagement. Le mode démo qui pilotera ce stress vient avec la feature 3.
@@ -344,7 +344,7 @@ Découpage de la semaine 2 (PRD §11) : 2. créature vivante, 3. mode démo, 4. 
   - `.gitignore` ignore les fichiers `RuntimeActionBindings.json` que le SDK Meta écrit à chaque Play.
   - Le profil de build Meta Quest passe à l'API Android cible 34, réglage appliqué par le Project Setup Tool.
 
-### 1. Socle technique (PRD §11, S1) — Validée (`ee0df9a`)
+### 1. Socle technique (PRD §11, S1) — Validée (`f677c2a`)
 
 - **Date** : 13 octobre 2026.
 - **Objectif** : projet Unity, SDK Meta, import des créatures. Critère : le Facteur s'affiche sur le bureau de la pièce synthétique « office » dans le simulateur.
